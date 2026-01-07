@@ -7,3 +7,51 @@ body {
     box-sizing: border-box;
     line-height: 1.6;
 }
+
+/* ====== Form Inputs ====== */
+input[type="text"],
+select,
+textarea {
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: none;
+    outline: none;
+    margin: 10px 0;
+    background-color: #1e1e1e;
+    color: #ffffff;
+    width: 100%;
+    max-width: 500px;
+    box-sizing: border-box;
+    transition: background-color 0.2s ease;
+}
+
+select option {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+input[type="text"]:focus,
+select:focus,
+textarea:focus {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ====== Buttons ====== */
+button {
+    padding: 12px 20px;
+    font-size: 16px;
+    background-color: #3e5ce4;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    margin: 10px 5px 20px 0;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: auto;
+    min-width: 120px;
+}
+
+button:hover {
+    background-color: #2b44af;
+}
