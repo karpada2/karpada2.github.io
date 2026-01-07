@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="/images/favicon.jpg">
+</head>
+
+<html>
+
+<body>
+    <script defer>
+        async function SHA_256(input) {
+            return await crypto.subtle.digest("SHA-256", base64ToUint8Array(input)).then(
+                (hashBuffer) => {
+                    const hashArray = Array.from(new Int8Array(hashBuffer))
+                    return hashArray
+                }
+            )
+        }
+        
+        function base64ToUint8Array(base64String) {
+            base64String += "=".repeat((4 - base64String.length % 4) % 4)
+            // 1. Decode the Base64 string into a binary string
+            //    atob() treats the input as Base64 and returns a string where each character's
+            //    Unicode value corresponds to the byte value of the original binary data.
+            const binaryString = atob(base64String);
+        
+            // 2. Create a int8Array with the same length as the binary string
+            const int8Array = new Uint8Array(binaryString.length);
+        
+            // 3. Populate the int8Array by iterating through the binary string
+            //    and getting the character code (byte value) of each character.
+            for (let i = 0; i < binaryString.length; i++) {
+                int8Array[i] = binaryString.charCodeAt(i);
+            }
+        
+            return int8Array;
+        }
+
+        function uint8ArrayToBase64(bytes) {
+            let binary = "";
+            for (let i = 0; i < bytes.length; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
+        }
+      
+        const ITERATIONS = 100_000;
+        const KEY_LENGTH = 256;
+        const IV_LENGTH = 12;
+        const TAG_LENGTH = 16;
+        
+        async function encryptApiKey(
+            password,
+            plainKey,
+            tagLengthIn = TAG_LENGTH,
+            ivLengthIn = IV_LENGTH,
+            keyLengthIn = KEY_LENGTH,
+            iterationsIn = ITERATIONS
+        ) {
+            // Generate salt and IV
+            const salt = crypto.getRandomValues(new Uint8Array(tagLengthIn));
+            const iv = crypto.getRandomValues(new Uint8Array(ivLengthIn));
+        
+            // Import password
+            const passwordBuffer = new TextEncoder().encode(password);
+            const passwordKey = await crypto.subtle.importKey(
+                "raw",
+                passwordBuffer,
+                "PBKDF2",
+                false,
+                ["deriveKey"]
+            );
+        
+            // Derive AES key
+            const derivedKey = await crypto.subtle.deriveKey(
+                {
+                    name: "PBKDF2",
+                    salt: salt,
+                    iterations: iterationsIn,
+                    hash: "SHA-256"
+                },
+                passwordKey,
+                {
+                    name: "AES-GCM",
+                    length: keyLengthIn
+                },
+                false,
+                ["encrypt"]
+            );
+        
+            // Encrypt
+            const encryptedBuffer = await crypto.subtle.encrypt(
+                {
+                    name: "AES-GCM",
+                    iv: iv
+                },
+                derivedKey,
+                new TextEncoder().encode(plainKey)
+            );
+        
+            const encrypted = new Uint8Array(encryptedBuffer);
+        
+            // Concatenate: salt || iv || encrypted
+            const output = new Uint8Array(
+                salt.length + iv.length + encrypted.length
+            );
+            output.set(salt, 0);
+            output.set(iv, salt.length);
+            output.set(encrypted, salt.length + iv.length);
+        
+            // Base64 encode
+            return uint8ArrayToBase64(output);
+        }
+        
+        
+        async function decryptApiKey(password, encryptedKey, tagLengthIn = TAG_LENGTH, ivLengthIn = IV_LENGTH, keyLengthIn = KEY_LENGTH, iterationsIn = ITERATIONS) {
+            var data = base64ToUint8Array(encryptedKey)
+        
+            var salt, iv, encrypted
+        
+            salt = data.slice(0, tagLengthIn)
+            iv = data.slice(tagLengthIn, tagLengthIn + ivLengthIn)
+            encrypted = data.slice(tagLengthIn + ivLengthIn, data.length)
+        
+            const passwordBuffer = new TextEncoder().encode(password)
+        
+            const passwordKey = await crypto.subtle.importKey(
+                "raw",
+                passwordBuffer,
+                "PBKDF2",
+                false,
+                ["deriveKey"]
+            )
+        
+            const derivedKey = await crypto.subtle.deriveKey(
+                {
+                    name: "PBKDF2",
+                    salt: salt,
+                    iterations: iterationsIn,
+                    hash: "SHA-256"
+                },
+                passwordKey,
+                {
+                    name: "AES-GCM",
+                    length: keyLengthIn
+                },
+                false,
+                ["decrypt"]
+            )
+        
+            const decrypted = await crypto.subtle.decrypt(
+                {
+                    name: "AES-GCM",
+                    iv: iv
+                },
+                derivedKey,
+                encrypted
+            )
+        
+            return new TextDecoder().decode(decrypted)
+        }
+
+        var passwordInput;
+        var encryptedInput;
+        var decryptedInput;
+
+        async function encrypt() {
+            encryptedInput.value =
+                await encryptApiKey(passwordInput.value, decryptedInput.value);
+        }
+        async function decrypt() {
+            decryptedInput.value = 
+            await decryptApiKey(passwordInput.value, encryptedInput.value);
+        }
+    </script>
+
+    <label for="passwordInput">Enter your password:</label><br>
+    <input type="text" id="passwordInput" name="passwordInput"><br>
+    <label for="decryptedInput">Enter text that you want to be encrypted:</label><br>
+    <input type="text" id="decryptedInput" name="decryptedInput">
+    <button id="encryptButton" onclick="encrypt()">Encrypt!</button><br>
+    <label for="encryptedInput">Enter text that you want to be decrypted:</label><br>
+    <input type="text" id="encryptedInput" name="encryptedInput">
+    <button id="decryptButton" onclick="decrypt()">Decrypt!</button><br>
+
+    <script>
+        passwordInput = document.getElementById("passwordInput");
+        encryptedInput = document.getElementById("encryptedInput");
+        decryptedInput = document.getElementById("decryptedInput");
+    </script>
+</body>
