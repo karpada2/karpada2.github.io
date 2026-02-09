@@ -163,6 +163,7 @@
         }
 
         var passwordInput;
+        var hashShowcase;
         var encryptedInput;
         var decryptedInput;
 
@@ -178,6 +179,8 @@
 
     <label for="passwordInput">Enter your password:</label><br>
     <input type="text" id="passwordInput" name="passwordInput"><br>
+    <label for="hashShowcase">Password hash:</label>
+    <p> <strong id="hashShowcase"></strong></p>
     <label for="decryptedInput">Enter text that you want to be encrypted:</label><br>
     <input type="text" id="decryptedInput" name="decryptedInput">
     <button id="encryptButton" onclick="encrypt()">Encrypt!</button><br>
@@ -187,7 +190,14 @@
 
     <script>
         passwordInput = document.getElementById("passwordInput");
+        hashShowcase = document.getElementById("hashShowcase")
         encryptedInput = document.getElementById("encryptedInput");
         decryptedInput = document.getElementById("decryptedInput");
+
+        passwordInput.addEventListener('input', function() {
+            SHA_256(passwordInput.value).then(hash => {
+                hashShowcase.textContent = hash;
+            });
+        });
     </script>
 </body>
