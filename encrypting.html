@@ -17,14 +17,6 @@
             const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); // 4. Hex string
             return hashHex;
         }
-
-        function hexToUint8Array(hexString) {
-            const bytes = new Uint8Array(hexString.length / 2);
-            for (let i = 0; i < hexString.length; i += 2) {
-                bytes[i / 2] = parseInt(hexString.substring(i, i + 2), 16);
-            }
-            return bytes;
-        }
         
         function base64ToUint8Array(base64String) {
             // This adds the correct number of '=' characters (0, 1, or 2) 
@@ -196,7 +188,7 @@
 
         passwordInput.addEventListener('input', function() {
             SHA_256(passwordInput.value).then(hash => {
-                hashShowcase.textContent = hexToUint8Array(hash);
+                hashShowcase.textContent = hash;
             });
         });
     </script>
