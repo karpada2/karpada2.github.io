@@ -1,0 +1,40 @@
+ <!DOCTYPE html>
+
+ <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ </head>
+
+
+<html>
+    <body>
+        <script type="module">
+            import * as encryption from "./encryption_and_security.js";
+            import { updateVariables } from "./database_handling.js";
+
+            async function attemptLogIn() {
+                var password = document.getElementById("passwordInput").value
+                var success = await encryption.attemptUpdateFirebaseApiKey(password)
+                document.getElementById("logInSuccessIndicator").textContent = success ? "Logging In!" : "WRONG PASSWORD"
+                await encryption.updateFirebaseReferences()
+                if (success) {
+                    var authenticated = await encryption.authenticateWithPassword(password);
+                    updateVariables(firebaseDatabase, firebaseAuthentication, document.getElementById("namesInput").value, authenticated)
+                    if (authenticated == "admin") {
+                        location.href = "./admin_homepage.html"
+                    }
+                    else {
+                        location.href = "./homepage.html"
+                    }
+                }
+            }
+            
+            document.getElementById("logInButton").addEventListener('click', async () => {
+                await attemptLogIn();
+            });
+        </script>
+        <input type="text" id="namesInput" placeholder="Your Names"><br>
+        <input type="text" id="passwordInput" placeholder="Password"><br>
+        <button id="logInButton">Log In</button>
+        <p id="logInSuccessIndicator"></p>
+    </body>
+</html>
