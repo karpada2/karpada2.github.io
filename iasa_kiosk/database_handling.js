@@ -39,27 +39,35 @@ export async function init() {
 //     return input.replace(/[.#$\[\]]/g, char => specialChars[char]);
 // }
 
-export async function getAllItems() {
+export async function getAllItems(alsoPriceHistory = false) {
     const querySnapshot = await firestore.getDocs(
         firestore.query(firestore.collection(firebaseDatabase, "ITEMS"), firestore.orderBy("ADDED_TIMESTAMP"))
     );
 
     const resultingArray = await Promise.all(
         querySnapshot.docs.map(async (doc) => {
-            const priceHistorySnapshot = await firestore.getDocs(
-                firestore.collection(firebaseDatabase, "ITEMS", doc.id, "PRICE_HISTORY")
-            );
-
-            const tempArray = priceHistorySnapshot.docs.map((phDoc) => ({
-                UUID: phDoc.id,
-                data: phDoc.data(),
-            }));
-
-            return {
-                UUID: doc.id,
-                data: doc.data(),
-                price_history: tempArray,
-            };
+            if (alsoPriceHistory) {
+                const priceHistorySnapshot = await firestore.getDocs(
+                    firestore.collection(firebaseDatabase, "ITEMS", doc.id, "PRICE_HISTORY")
+                );
+    
+                const tempArray = priceHistorySnapshot.docs.map((phDoc) => ({
+                    UUID: phDoc.id,
+                    data: phDoc.data(),
+                }));
+    
+                return {
+                    UUID: doc.id,
+                    data: doc.data(),
+                    price_history: tempArray,
+                };
+            }
+            else {
+                return {
+                    UUID: doc.id,
+                    data: doc.data()
+                };
+            }
         })
     );
 
