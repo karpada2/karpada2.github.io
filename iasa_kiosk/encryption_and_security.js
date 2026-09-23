@@ -1,8 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getDatabase } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-database.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "",
 
   authDomain: "iasa-kiosk-temp.firebaseapp.com",
@@ -19,7 +19,7 @@ const firebaseConfig = {
 
 };
 
-var firebaseApp
+export var firebaseApp
 export var firebaseDatabase
 export var firebaseAuthentication
 
@@ -112,7 +112,7 @@ export async function attemptUpdateFirebaseApiKey(givenPassword) {
 
 export function updateFirebaseReferences() {
     firebaseApp = initializeApp(firebaseConfig)
-    firebaseDatabase = getDatabase(firebaseApp)
+    firebaseDatabase = getFirestore(firebaseApp)
     firebaseAuthentication = getAuth(firebaseApp)
 }
 

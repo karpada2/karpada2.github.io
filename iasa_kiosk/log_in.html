@@ -19,7 +19,7 @@
                 await encryption.updateFirebaseReferences()
                 if (success) {
                     var authenticated = await encryption.authenticateWithPassword(password);
-                    updateVariables(firebaseDatabase, firebaseAuthentication, document.getElementById("namesInput").value, authenticated)
+                    updateVariables(authenticated, encryption.firebaseConfig.apiKey, document.getElementById("namesInput").value)
                     if (authenticated == "admin") {
                         location.href = "./admin_homepage.html"
                     }

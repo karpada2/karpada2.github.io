@@ -1,0 +1,227 @@
+ <!DOCTYPE html>
+
+ <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+ </head>
+
+
+<html>
+    <body>
+        <script type="module">
+            import * as databaseHandler from "./database_handling.js"
+
+            document.addEventListener('keydown', function(event) {
+                // Check if the pressed key is 'Enter' and the active element is an input
+                if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
+                    event.target.blur(); // Removes focus from the input
+                }
+            });
+
+            await databaseHandler.init()
+
+            var originalItems = await databaseHandler.getAllItems()
+            var items = JSON.parse(JSON.stringify(originalItems))
+            var displayTable = document.getElementById("itemsTable")
+            var indexToWrite = 1
+            var rowAmount = 2
+            items.forEach((item, index) => {
+                var newRow = displayTable.insertRow(rowAmount - 1)
+                rowAmount++
+
+                var idCell = newRow.insertCell(0)
+                idCell.textContent = indexToWrite
+                indexToWrite++
+
+
+                var nameCell = newRow.insertCell(1)
+                var nameInput = document.createElement("input")
+                nameInput.type = "text";
+                nameInput.id = "name-" + (index + 1);
+
+                nameInput.placeholder = "הכנס שם מוצר..."
+                nameInput.value = item["data"]["NAMES"][0]
+
+                nameInput.addEventListener('blur', (event) => {
+                    nameInput.value = nameInput.value.trim()
+                    items[index]["data"]["NAMES"][0] = nameInput.value
+                    console.log(items)
+                });
+                nameCell.appendChild(nameInput)
+
+
+                var priceCell = newRow.insertCell(2)
+                var priceInput = document.createElement('input');
+
+                priceInput.type = 'number';
+
+                priceInput.id = 'price-' + (index+1);
+                priceInput.placeholder = "הכנס מחיר מוצר..."
+                priceInput.value = item["data"]["CURRENT_PRICE"]/10;
+                priceInput.min = '0.1';
+                priceInput.step = '0.1';
+
+                priceInput.addEventListener('blur', (event) => {
+                    priceInput.value = Math.round(priceInput.value * 10) / 10
+                    items[index]["data"]["CURRENT_PRICE"] = priceInput.value*10
+                    console.log(items)
+                });
+
+                priceCell.appendChild(priceInput)
+
+
+                var altNamesCell = newRow.insertCell(3)
+                var altNamesInput = document.createElement("input");
+
+                altNamesInput.type = "text"
+                altNamesInput.id = "alt-names-" + (index + 1);
+
+                altNamesInput.placeholder = "הכנס שמות נוספים..."
+                altNamesInput.value = item["data"]["NAMES"].slice(1).join(",")
+
+                altNamesInput.addEventListener('blur', (event) => {
+                    var result = altNamesInput.value.split(",").map(element => element.trim())
+                    items[index]["data"]["NAMES"] = [items[index]["data"]["NAMES"][0], ...result]
+                    altNamesInput.value = item["data"]["NAMES"].slice(1).join(",")
+                    console.log(items)
+                });
+                altNamesCell.appendChild(altNamesInput)
+
+
+                var isActiveCell = newRow.insertCell(4)
+                var checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.id = "is-active-" + (index + 1);
+
+                checkbox.checked = item["data"]["IS_ACTIVE"]; 
+
+                checkbox.addEventListener('change', (event) => {
+                    items[index]["data"]["IS_ACTIVE"] = checkbox.checked
+                    console.log(items)
+                });
+
+                isActiveCell.appendChild(checkbox);
+            });
+            
+            function addItem() {
+                var newRow = displayTable.insertRow(rowAmount - 1)
+                var newItemIndex = rowAmount - 2
+                rowAmount++
+
+                items.push({
+                    "UUID": crypto.randomUUID(),
+                    "data": {
+                        "ADDED_TIMESTAMP": Math.floor(Date.now() / 1000),
+                        "CURRENT_PRICE": 50,
+                        "IS_ACTIVE": false,
+                        "NAMES": ["תשנו אותי"]
+                    }
+                })
+                var item = items[items.length - 1];
+
+                var idCell = newRow.insertCell(0)
+                idCell.textContent = indexToWrite
+                indexToWrite++
+
+
+                var nameCell = newRow.insertCell(1)
+                var nameInput = document.createElement("input")
+                nameInput.type = "text";
+                nameInput.id = "name-" + (rowAmount - 1);
+
+
+                nameInput.placeholder = "הכנס שם מוצר..."
+                nameInput.value = item["data"]["NAMES"][0]
+
+                nameInput.addEventListener('blur', (event) => {
+                    nameInput.value = nameInput.value.trim()
+                    items[newItemIndex]["data"]["NAMES"][0] = nameInput.value
+                    console.log(items)
+                });
+                nameCell.appendChild(nameInput)
+
+
+                var priceCell = newRow.insertCell(2)
+                var priceInput = document.createElement('input');
+
+                priceInput.type = 'number';
+
+                priceInput.id = 'price-' + (rowAmount - 1);
+                priceInput.placeholder = "הכנס מחיר מוצר..."
+                priceInput.value = item["data"]["CURRENT_PRICE"]/10;
+                priceInput.min = '0.1';
+                priceInput.step = '0.1';
+
+                priceInput.addEventListener('blur', (event) => {
+                    priceInput.value = Math.round(priceInput.value * 10) / 10
+                    items[newItemIndex]["data"]["CURRENT_PRICE"] = priceInput.value*10
+                    console.log(items)
+                });
+
+                priceCell.appendChild(priceInput)
+
+
+                var altNamesCell = newRow.insertCell(3)
+                var altNamesInput = document.createElement("input");
+
+                altNamesInput.type = "text"
+                altNamesInput.id = "alt-names-" + (rowAmount - 1);
+
+                altNamesInput.placeholder = "הכנס שמות נוספים..."
+                altNamesInput.value = item["data"]["NAMES"].slice(1).join(",")
+
+                altNamesInput.addEventListener('blur', (event) => {
+                    var result = altNamesInput.value.split(",").map(element => element.trim())
+                    items[newItemIndex]["data"]["NAMES"] = [items[newItemIndex]["data"]["NAMES"][0], ...result]
+                    altNamesInput.value = item["data"]["NAMES"].slice(1).join(",")
+                    console.log(items)
+                });
+                altNamesCell.appendChild(altNamesInput)
+
+
+                var isActiveCell = newRow.insertCell(4)
+                var checkbox = document.createElement("input");
+                checkbox.type = "checkbox";
+                checkbox.id = "is-active-" + (rowAmount - 1);
+
+                checkbox.checked = item["data"]["IS_ACTIVE"]; 
+
+                checkbox.addEventListener('change', (event) => {
+                    items[newItemIndex]["data"]["IS_ACTIVE"] = checkbox.checked
+                    console.log(items)
+                });
+
+                isActiveCell.appendChild(checkbox);
+            }
+
+            document.getElementById("addItemButton").addEventListener("click", event => {
+                addItem()
+            })
+
+            document.getElementById("sendChangesButton").addEventListener("click", async event => {
+                await databaseHandler.updateItems(originalItems, items)
+                console.log("success")
+            })
+        </script>
+        <button id="sendChangesButton">שלח שינויים</button>
+
+        <table id="itemsTable">
+            <thead>
+                <tr>
+                    <th>'מס</th>
+                    <th>שם</th>
+                    <th>מחיר (שקלים)</th>
+                    <th>שמות נוספים</th>
+                    <th>האם פעיל</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <button id="addItemButton">הוסף מוצר</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </body>
+</html>

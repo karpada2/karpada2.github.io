@@ -8,6 +8,14 @@
 
 <html>
     <body>
-        <p>Nothing right now for admins!</p>
+        <script type="module">
+            function goToItemsManager() {
+                location.href="./items_manager.html"
+            }
+            document.getElementById("itemsManagerButton").addEventListener('click', async () => {
+                goToItemsManager()
+            });
+        </script>
+        <button id="itemsManagerButton">Items Manager</button>
     </body>
 </html>

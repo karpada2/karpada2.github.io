@@ -1,14 +1,38 @@
 table {
-  width: 100%;
-  border-collapse: collapse; /* Prevents double borders */
+    width: 100%;
+    border-collapse: collapse;
+    font-family: Arial, sans-serif;
+    margin-top: 20px;
 }
-
 th, td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left; /* Aligns data text consistently */
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: left;
 }
-
 th {
-  background-color: #f2f2f2;
+    background-color: #f4f4f4;
+    color: #333;
+}
+/* Style inputs to cleanly fit inside the table cells */
+input[type="text"], 
+input[type="email"], 
+input[type="number"], 
+select {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box; /* Ensures padding doesn't affect width */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+button {
+    padding: 10px 20px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 15px;
+}
+button:hover {
+    background-color: #0056b3;
 }
