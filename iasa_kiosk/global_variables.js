@@ -1,9 +1,9 @@
 export function getOperatingGrade() {
-    return 36
+    return "36"
 }
 
 export function getActiveGrades() {
-    return [36, 37, 38]
+    return ["36", "37", "38"]
 }
 
 export function getCustomerTypes() {

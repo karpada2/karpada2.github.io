@@ -8,7 +8,8 @@ export const requiredAccessLevels = {
     "admin_homepage.html": ["admin"],
     "customers_manager.html": ["admin"],
     "items_manager.html": ["admin"],
-    "homepage.html": ["admin", "basic"]
+    "homepage.html": ["admin", "basic"],
+    "purchases_logger.html": ["admin", "basic"],
 }
 
 
@@ -124,7 +125,7 @@ export async function attemptLogIn(password, names) {
         }
         if (sessionStorage.getItem("wantedLocation") != null) {
             const pageName = sessionStorage.getItem("wantedLocation").split('/').pop();
-            if (authenticated in requiredAccessLevels[pageName]) {
+            if (requiredAccessLevels[pageName].includes(authenticated)) {
                 locationToSend = sessionStorage.getItem("wantedLocation")
             }
         }

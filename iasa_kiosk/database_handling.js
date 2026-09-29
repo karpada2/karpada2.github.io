@@ -1,5 +1,6 @@
 import * as encryption from "./encryption_and_security.js"
 import * as firestore from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import * as globals from "./global_variables.js"
 
 export var firebaseDatabase
 export var firebaseAuthentication
@@ -24,6 +25,10 @@ export async function init() {
         sessionStorage.setItem("wantedLocation", location.href)
         location.href="./login.html"
     }
+}
+
+export function getCurrentTimestamp() {
+    return Math.floor(Date.now() / 1000)
 }
 
 // export function convertDatabaseDataToIntended(input) {
@@ -79,6 +84,28 @@ export async function getAllItems(alsoPriceHistory = false) {
     return resultingArray;
 }
 
+export async function getItemsDataForPurchases() {
+    const querySnapshot = await firestore.getDocs(
+        firestore.query(firestore.collection(firebaseDatabase, "ITEMS"), firestore.where("IS_ACTIVE", "==", true), firestore.orderBy("ADDED_TIMESTAMP"))
+    );
+
+    var namesArray = []
+    var uuidsArray = []
+    var pricesArray = []
+
+    querySnapshot.forEach((doc) => {
+        namesArray.push(doc.data()["NAMES"])
+        uuidsArray.push(doc.id)
+        pricesArray.push(doc.data()["CURRENT_PRICE"])
+    })
+
+    return {
+        names: namesArray,
+        UUIDs: uuidsArray,
+        prices: pricesArray,
+    };
+}
+
 export async function updateItems(originalItems, newItems) {
     await newItems.forEach(async (newItem, index) => {
         const itemRef = firestore.doc(firebaseDatabase, "ITEMS", newItem.UUID)
@@ -108,12 +135,12 @@ export async function updateItems(originalItems, newItems) {
             }
 
             if (addPriceHistory) {
-                await firestore.setDoc(firestore.doc(firebaseDatabase, "ITEMS", newItem.UUID, "PRICE_HISTORY", crypto.randomUUID()), {"TIMESTAMP" : Math.floor(Date.now() / 1000), "PRICE" : newItem["data"]["CURRENT_PRICE"]})
+                await firestore.setDoc(firestore.doc(firebaseDatabase, "ITEMS", newItem.UUID, "PRICE_HISTORY", crypto.randomUUID()), {"TIMESTAMP" : getCurrentTimestamp(), "PRICE" : newItem["data"]["CURRENT_PRICE"]})
             }
         }
         else {
             await firestore.setDoc(itemRef, newItem["data"])
-            await firestore.setDoc(firestore.doc(firebaseDatabase, "ITEMS", newItem.UUID, "PRICE_HISTORY", crypto.randomUUID()), {"TIMESTAMP" : Math.floor(Date.now() / 1000), "PRICE" : newItem["data"]["CURRENT_PRICE"]})
+            await firestore.setDoc(firestore.doc(firebaseDatabase, "ITEMS", newItem.UUID, "PRICE_HISTORY", crypto.randomUUID()), {"TIMESTAMP" : getCurrentTimestamp(), "PRICE" : newItem["data"]["CURRENT_PRICE"]})
         }
     });
 }
@@ -199,4 +226,24 @@ export async function updateCustomers(originalCustomers, newCustomers) {
             await firestore.setDoc(customerRef, newCustomer["data"])
         }
     });
+}
+
+export async function savePurchase(customerUUID, itemUUID, amount, totalPrice) {
+    const purchaseRef = firestore.doc(firebaseDatabase, "CUSTOMERS", customerUUID, "PURCHASES", crypto.randomUUID())
+    await firestore.setDoc(purchaseRef, {
+        "AMOUNT": parseInt(amount),
+        "ITEM": firestore.doc(firebaseDatabase, "ITEMS", itemUUID),
+        "OPERATING_GRADE": globals.getOperatingGrade(),
+        "PRICE": totalPrice,
+        "SELLERS_NAMES": sessionStorage.getItem("sellersNames"),
+        "TIMESTAMP": getCurrentTimestamp()
+    })
+    await modifyDebt(customerUUID, totalPrice)
+}
+
+async function modifyDebt(customerUUID, modifyAmount) {
+    const customerRef = firestore.doc(firebaseDatabase, "CUSTOMERS", customerUUID)
+    await firestore.updateDoc(customerRef, {
+        ["CURRENT_DEBT." + globals.getOperatingGrade()]: firestore.increment(modifyAmount)
+    })
 }

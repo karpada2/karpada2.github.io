@@ -9,12 +9,17 @@
 
 <html>
     <body>
-        <script type="module">
+                <script type="module">
             import * as databaseHandler from "./database_handling.js"
             import * as globals from "./global_variables.js"
 
             await databaseHandler.init()
+            
+            function goToPurchasesLogger() {
+                location.href="./purchases_logger.html"
+            }
+            document.getElementById("purchasesLogger").addEventListener('click', goToPurchasesLogger);
         </script>
-        <p>Nothing right now!</p>
+        <button id="purchasesLogger">רושם קניות</button>
     </body>
 </html>

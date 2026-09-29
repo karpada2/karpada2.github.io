@@ -36,3 +36,35 @@ button {
 button:hover {
     background-color: #0056b3;
 }
+.autocomplete {
+  position: relative;
+  display: inline-block;
+}
+
+.autoCompleteList {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #ccc;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.autoCompleteList[hidden] {
+  display: none;
+}
+
+.autoCompleteList li {
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.autoCompleteList li:hover {
+  background: #eee;
+}
