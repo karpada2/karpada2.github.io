@@ -9,6 +9,12 @@
 
 <html>
     <body>
+        <script type="module">
+            import * as databaseHandler from "./database_handling.js"
+            import * as globals from "./global_variables.js"
+
+            await databaseHandler.init()
+        </script>
         <p>Nothing right now!</p>
     </body>
 </html>
