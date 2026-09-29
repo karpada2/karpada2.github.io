@@ -17,6 +17,7 @@
             await databaseHandler.init()
 
             var allItemsNames = await databaseHandler.getItemsDataForPurchases()
+            var allItemsPrimaryNames = allItemsNames["names"].map(names => (names[0]))
             var allCustomers = await databaseHandler.getCustomersFromGrades(globals.getActiveGrades())
             var customerNameUUIDMap = allCustomers["names"]
             const allItemsIndexes = [...Array(allItemsNames["names"].length).keys()];
@@ -37,7 +38,7 @@
                 {
                     includeMatches: false, 
                     useTokenSearch: true,
-                    includeScore: false
+                    includeScore: true
                 }
             )
 
@@ -85,7 +86,17 @@
             }
             
             itemNameInput.addEventListener("focus", refreshItems)
-            itemNameInput.addEventListener("input", () => { selectedItemIndex = null; refreshItems() })
+            itemNameInput.addEventListener("input", () => {
+                selectedItemIndex = null;
+                refreshItems();
+                if (selectedItemIndex == null && allItemsPrimaryNames.includes(itemNameInput.value.trim())) {
+                    selectedItemIndex = allItemsPrimaryNames.indexOf(itemNameInput.value.trim())
+                }
+                if (selectedItemIndex == -1) {
+                    selectedItemIndex = null
+                }
+                updatePriceShowcase()
+            })
             itemNameInput.addEventListener("blur", () => { itemList.hidden = true })
             
             
@@ -116,7 +127,12 @@
             
             customerNameInput.addEventListener("focus", refreshCustomers)
             customerNameInput.addEventListener("input", () => { selectedName = null; refreshCustomers() })
-            customerNameInput.addEventListener("blur", () => { customerList.hidden = true })
+            customerNameInput.addEventListener("blur", () => {
+                customerList.hidden = true;
+                if (customerSearch.search(customerNameInput.value.trim())[0].score < perfectScoreTolerance) {
+                    selectedName = customerNameInput.value.trim()
+                }
+            })
             
             
             

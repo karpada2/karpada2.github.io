@@ -173,6 +173,47 @@ export async function getCustomersFromGrades(grades) {
     };
 }
 
+export async function getCustomersFromGradesOriginalData(grades) {
+    var orStatement = firestore.where("GRADE", "==", "N/A")
+    for (var i = 0; i < grades.length; i++) {
+        orStatement = firestore.or(orStatement, firestore.where("GRADE", "==", String(grades[i])))
+    }
+    const querySnapshot = await firestore.getDocs(
+        firestore.query(firestore.collection(firebaseDatabase, "CUSTOMERS"), orStatement, firestore.orderBy("GRADE"))
+    );
+
+    const resultingMap = {}
+
+    querySnapshot.forEach((doc) => {
+        resultingMap[[doc.id]] = doc.data()
+    })
+
+    return resultingMap
+}
+
+export async function getCustomersInRoom(roomNumber, grades, forceCache = true) {
+    var orStatement = firestore.where("GRADE", "==", String(grades[0]))
+    for (var i = 1; i < grades.length; i++) {
+        orStatement = firestore.or(orStatement, firestore.where("GRADE", "==", String(grades[i])))
+    }
+
+    const q = firestore.query(
+        firestore.collection(firebaseDatabase, "CUSTOMERS"),
+        firestore.and(firestore.where("ROOM_NUMBER", "==", String(roomNumber)), orStatement)
+    )
+    const querySnapshot = forceCache
+        ? await firestore.getDocsFromCache(q)
+        : await firestore.getDocs(q)
+
+    var resultingMap = {}
+
+    querySnapshot.forEach((doc) => {
+        resultingMap[doc.data()["NAME"]] = doc.data()["CURRENT_DEBT"][globals.getOperatingGrade()]
+    })
+
+    return resultingMap
+}
+
 export async function updateCustomers(originalCustomers, newCustomers) {
     await newCustomers.forEach(async (newCustomer, index) => {
         const customerRef = firestore.doc(firebaseDatabase, "CUSTOMERS", newCustomer.UUID)

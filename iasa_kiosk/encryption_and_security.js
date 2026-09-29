@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import * as databaseHandler from "./database_handling.js"
 
 
@@ -147,7 +147,12 @@ export async function attemptUpdateFirebaseApiKey(givenPassword) {
 
 export function updateFirebaseReferences() {
     firebaseApp = initializeApp(firebaseConfig)
-    firebaseDatabase = getFirestore(firebaseApp)
+    firebaseDatabase = initializeFirestore(
+        firebaseApp, 
+        {
+            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+        }
+    );
     firebaseAuthentication = getAuth(firebaseApp)
 }
 

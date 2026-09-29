@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/jpeg" href="/iasa_kiosk/kiosk_favicon.jpeg">
+</head>
+
+
+<html>
+    <body>
+        <script type="module">
+            import Fuse from "https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.mjs";
+            import * as databaseHandler from "./database_handling.js"
+            import * as globals from "./global_variables.js"
+
+            await databaseHandler.init()
+            
+            const perfectScoreTolerance = 0.001
+            
+            var allCustomers = await databaseHandler.getCustomersFromGrades(globals.getActiveGrades())
+            var baseCustomers = await databaseHandler.getCustomersFromGradesOriginalData(globals.getActiveGrades())
+            var customerNameUUIDMap = allCustomers["names"]
+            const allCustomersNames = Object.keys(customerNameUUIDMap)
+
+            const customerSearch = new Fuse(
+                allCustomersNames,
+                {
+                    includeMatches: false, 
+                    useTokenSearch: true,
+                    includeScore: true
+                }
+            )
+            
+            const customerNameInput = document.getElementById("customerNameInput")
+            const customerList = document.getElementById("customerList")
+            var selectedName = null
+            
+            function renderCustomerList(names) {
+                customerList.replaceChildren()
+                for (const name of names) {
+                    const li = document.createElement("li")
+                    li.textContent = name
+                    li.addEventListener("mousedown", (e) => {
+                        e.preventDefault()               // keeps input from blurring first
+                        selectedName = name
+                        customerNameInput.value = li.textContent
+                        customerList.hidden = true
+                        updatePersonalDebt()
+                    })
+                    customerList.appendChild(li)
+                }
+                customerList.hidden = names.length === 0
+            }
+            
+            function refreshCustomers() {
+                const q = customerNameInput.value.trim()
+                renderCustomerList(q === "" ? allCustomersNames : customerSearch.search(q).map(r => r.item))
+            }
+            
+            customerNameInput.addEventListener("focus", refreshCustomers)
+            customerNameInput.addEventListener("input", () => { selectedName = null; refreshCustomers() })
+            customerNameInput.addEventListener("blur", () => {
+                customerList.hidden = true;
+                if (customerSearch.search(customerNameInput.value.trim())[0]["score"] < perfectScoreTolerance) {
+                    selectedName = customerNameInput.value.trim()
+                }
+                updatePersonalDebt()
+            })
+
+            function updatePersonalDebt() {
+                const debt = baseCustomers[customerNameUUIDMap[selectedName]]["CURRENT_DEBT"][globals.getOperatingGrade()]
+                if (debt == undefined) {
+                    debt = 0
+                }
+                
+                document.getElementById("personalDebtShowcase").textContent = debt/10
+            }
+
+            function updateDebtsList(debts) {
+                const debtsList = document.getElementById("debtsList")
+                debtsList.replaceChildren()
+                Object.keys(debts).forEach((element) => {
+                    const li = document.createElement("li")
+                    li.textContent = String(element) + ": " + String(debts[element]/10)
+                    debtsList.appendChild(li)
+                });
+            }
+
+            const roomNumberInput = document.getElementById("roomNumberInput")
+            roomNumberInput.addEventListener("input", async (event) => {
+                if (parseInt(roomNumberInput.value.trim()) == roomNumberInput.value.trim()) {
+                    const roomCustomers = await databaseHandler.getCustomersInRoom(roomNumberInput.value.trim(), globals.getActiveGrades())
+                    updateDebtsList(roomCustomers)
+                }
+            })
+        </script>
+        <div class="autocomplete" id="personalDebtChecker">
+            <label for="customerNameInput">:הכנס שם לקוח</label>
+            <input type="text" id="customerNameInput" autocomplete="off">
+            <ul id="customerList" class="autoCompleteList" hidden></ul>
+            <p id="personalDebtShowcase"></p>
+        </div><br>
+        <div id="roomDebtChecker">
+            <label for="roomNumberInput">:הכנס מספר חדר</label>
+            <input type="number" min="1" max="92" step="1" id="roomNumberInput">
+            <ul id="debtsList"></ul>
+        </div><br>
+    </body>
+</html>
