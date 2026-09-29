@@ -10,6 +10,7 @@ export const requiredAccessLevels = {
     "items_manager.html": ["admin"],
     "homepage.html": ["admin", "basic"],
     "purchases_logger.html": ["admin", "basic"],
+    "debt_payments.html": ["admin", "basic"],
 }
 
 

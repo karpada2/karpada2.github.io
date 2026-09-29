@@ -282,6 +282,18 @@ export async function savePurchase(customerUUID, itemUUID, amount, totalPrice) {
     await modifyDebt(customerUUID, totalPrice)
 }
 
+export async function savePayment(customerUUID, paymentSize, isMethodCash) {
+    const paymentRef = firestore.doc(firebaseDatabase, "CUSTOMERS", customerUUID, "PAYMENTS", crypto.randomUUID())
+    await firestore.setDoc(paymentRef, {
+        "IS_METHOD_CASH": isMethodCash,
+        "OPERATING_GRADE": globals.getOperatingGrade(),
+        "PAYMENT_SIZE": paymentSize,
+        "SELLERS_NAMES": sessionStorage.getItem("sellersNames"),
+        "TIMESTAMP": getCurrentTimestamp()
+    })
+    await modifyDebt(customerUUID, -paymentSize)
+}
+
 async function modifyDebt(customerUUID, modifyAmount) {
     const customerRef = firestore.doc(firebaseDatabase, "CUSTOMERS", customerUUID)
     await firestore.updateDoc(customerRef, {
