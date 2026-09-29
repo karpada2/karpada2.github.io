@@ -121,25 +121,16 @@ export async function updateItems(originalItems, newItems) {
 
 // returns a map containing the customers as pure data, and also the names as a map to the UUID, for fuzzy search
 export async function getCustomersFromGrades(grades) {
-    var orStatement = firestore.where("GRADE", "==", String(grades[0]))
-    for (var i = 1; i < grades.length; i++) {
+    var orStatement = firestore.where("GRADE", "==", "N/A")
+    for (var i = 0; i < grades.length; i++) {
         orStatement = firestore.or(orStatement, firestore.where("GRADE", "==", String(grades[i])))
     }
     const querySnapshot = await firestore.getDocs(
         firestore.query(firestore.collection(firebaseDatabase, "CUSTOMERS"), orStatement, firestore.orderBy("GRADE"))
     );
 
-    const guestDoc = await firestore.getDoc(firestore.doc(firebaseDatabase, "CUSTOMERS", "GUEST"))
-
-    const nameUUIDMap = {
-        [guestDoc.data()["NAME"]]: guestDoc.id
-    }
-    const resultingArray = [
-        {
-            UUID: guestDoc.id,
-            data: guestDoc.data()
-        }
-    ]
+    const nameUUIDMap = {}
+    const resultingArray = []
 
     querySnapshot.forEach((doc) => {
         resultingArray.push({
@@ -189,6 +180,9 @@ export async function updateCustomers(originalCustomers, newCustomers) {
                 if (changes["CUSTOMER_TYPE"] != "פנימיסט") {
                     changes["ROOM_NUMBER"] = "N/A"
                 }
+                if (changes["CUSTOMER_TYPE"] == "צוות") {
+                    changes["GRADE"] = "N/A"
+                }
             }
 
             if (anyChanges) {
@@ -198,6 +192,9 @@ export async function updateCustomers(originalCustomers, newCustomers) {
         else {
             if (newCustomer["data"]["CUSTOMER_TYPE"] != "פנימיסט") {
                 newCustomer["data"]["ROOM_NUMBER"] = "N/A"
+            }
+            if (newCustomer["data"]["CUSTOMER_TYPE"] == "צוות") {
+                newCustomer["data"]["GRADE"] = "N/A"
             }
             await firestore.setDoc(customerRef, newCustomer["data"])
         }
