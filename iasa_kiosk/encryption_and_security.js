@@ -3,6 +3,15 @@ import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/fir
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import * as databaseHandler from "./database_handling.js"
 
+
+export const requiredAccessLevels = {
+    "admin_homepage.html": ["admin"],
+    "customers_manager.html": ["admin"],
+    "items_manager.html": ["admin"],
+    "homepage.html": ["admin", "basic"]
+}
+
+
 export const firebaseConfig = {
   apiKey: "",
 
@@ -106,15 +115,20 @@ export async function attemptLogIn(password, names) {
     if (success) {
         var authenticated = await authenticateWithPassword(password);
         databaseHandler.updateVariables(authenticated, firebaseConfig.apiKey, names)
+        var locationToSend = "login.html"
+        if (authenticated == "basic") {
+            locationToSend = "./homepage.html"
+        }
+        if (authenticated == "admin") {
+            locationToSend = "./admin_homepage.html"
+        }
         if (sessionStorage.getItem("wantedLocation") != null) {
-            location.href = sessionStorage.getItem("wantedLocation")
+            const pageName = sessionStorage.getItem("wantedLocation").split('/').pop();
+            if (authenticated in requiredAccessLevels[pageName]) {
+                locationToSend = sessionStorage.getItem("wantedLocation")
+            }
         }
-        else if (authenticated == "admin") {
-            location.href = "./admin_homepage.html"
-        }
-        else {
-            location.href = "./homepage.html"
-        }
+        location.href = locationToSend
     }
 }
 
