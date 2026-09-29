@@ -112,3 +112,38 @@ export async function updateItems(originalItems, newItems) {
         }
     });
 }
+
+export async function getCustomersFromYears(years) {
+    const querySnapshot = await firestore.getDocs(
+        firestore.query(firestore.collection(firebaseDatabase, "CUSTOMERS"), firestore.orderBy("ADDED_TIMESTAMP"))
+    );
+
+    const resultingArray = await Promise.all(
+        querySnapshot.docs.map(async (doc) => {
+            if (alsoPriceHistory) {
+                const priceHistorySnapshot = await firestore.getDocs(
+                    firestore.collection(firebaseDatabase, "ITEMS", doc.id, "PRICE_HISTORY")
+                );
+    
+                const tempArray = priceHistorySnapshot.docs.map((phDoc) => ({
+                    UUID: phDoc.id,
+                    data: phDoc.data(),
+                }));
+    
+                return {
+                    UUID: doc.id,
+                    data: doc.data(),
+                    price_history: tempArray,
+                };
+            }
+            else {
+                return {
+                    UUID: doc.id,
+                    data: doc.data()
+                };
+            }
+        })
+    );
+
+    return resultingArray;
+}
