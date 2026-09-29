@@ -11,6 +11,7 @@
     <body>
         <script type="module">
             import * as databaseHandler from "./database_handling.js"
+            import * as globals from "./global_variables.js"
 
             document.addEventListener('keydown', function(event) {
                 // Check if the pressed key is 'Enter' and the active element is an input
@@ -21,12 +22,12 @@
 
             await databaseHandler.init()
 
-            var originalItems = await databaseHandler.getAllItems()
-            var items = JSON.parse(JSON.stringify(originalItems))
-            var displayTable = document.getElementById("itemsTable")
+            var originalCustomers = (await databaseHandler.getCustomersFromGrades(globals.getActiveGrades()))["full_data"]
+            var customers = JSON.parse(JSON.stringify(originalCustomers))
+            var displayTable = document.getElementById("customersTable")
             var indexToWrite = 1
             var rowAmount = 2
-            items.forEach((item, index) => {
+            customers.forEach((customer, index) => {
                 var newRow = displayTable.insertRow(rowAmount - 1)
                 rowAmount++
 
@@ -40,85 +41,103 @@
                 nameInput.type = "text";
                 nameInput.id = "name-" + (index + 1);
 
-                nameInput.placeholder = "הכנס שם מוצר..."
-                nameInput.value = item["data"]["NAMES"][0]
+                nameInput.placeholder = "הכנס שם תלמיד..."
+                nameInput.value = customer["data"]["NAME"]
 
                 nameInput.addEventListener('blur', (event) => {
                     nameInput.value = nameInput.value.trim()
-                    items[index]["data"]["NAMES"][0] = nameInput.value
-                    console.log(items)
+                    customer["data"]["NAME"] = nameInput.value
+                    console.log(customers)
                 });
                 nameCell.appendChild(nameInput)
 
 
-                var priceCell = newRow.insertCell(2)
-                var priceInput = document.createElement('input');
+                var debtCell = newRow.insertCell(2)
+                if (!Object.hasOwn(customer["data"]["CURRENT_DEBT"], String(globals.getOperatingGrade()))) {
+                    customer["data"]["CURRENT_DEBT"][String(globals.getOperatingGrade())] = 0
+                }
+                debtCell.textContent = customer["data"]["CURRENT_DEBT"][String(globals.getOperatingGrade())]/10;
 
-                priceInput.type = 'number';
 
-                priceInput.id = 'price-' + (index+1);
-                priceInput.placeholder = "הכנס מחיר מוצר..."
-                priceInput.value = item["data"]["CURRENT_PRICE"]/10;
-                priceInput.min = '0.1';
-                priceInput.step = '0.1';
+                var roomCell = newRow.insertCell(3)
+                var roomInput = document.createElement('input');
 
-                priceInput.addEventListener('blur', (event) => {
-                    priceInput.value = Math.round(priceInput.value * 10) / 10
-                    items[index]["data"]["CURRENT_PRICE"] = priceInput.value*10
-                    console.log(items)
+                roomInput.type = 'number';
+
+                roomInput.id = 'room-' + (rowAmount - 1);
+                roomInput.placeholder = "הכנס מס' חדר (עבור יומיים ניתן להכניס כל ערך)..."
+                roomInput.value = customer["data"]["ROOM_NUMBER"];
+                roomInput.step = '1';
+
+                roomInput.addEventListener('blur', (event) => {
+                    roomInput.value = parseInt(roomInput.value)
+                    customer["data"]["ROOM_NUMBER"] = roomInput.value
+                    console.log(customers)
                 });
 
-                priceCell.appendChild(priceInput)
+                roomCell.appendChild(roomInput)
+
+                
+                var gradeCell = newRow.insertCell(4)
+                gradeCell.textContent = customer["data"]["GRADE"];
 
 
-                var altNamesCell = newRow.insertCell(3)
-                var altNamesInput = document.createElement("input");
+                var phoneCell = newRow.insertCell(5)
+                var phoneInput = document.createElement('input');
 
-                altNamesInput.type = "text"
-                altNamesInput.id = "alt-names-" + (index + 1);
+                phoneInput.type = 'tel';
 
-                altNamesInput.placeholder = "הכנס שמות נוספים..."
-                altNamesInput.value = item["data"]["NAMES"].slice(1).join(",")
+                phoneInput.id = 'phone-' + (rowAmount - 1);
+                phoneInput.placeholder = "הכנס מס' טלפון..."
+                phoneInput.value = customer["data"]["PHONE_NUMBER"];
 
-                altNamesInput.addEventListener('blur', (event) => {
-                    var result = altNamesInput.value.split(",").map(element => element.trim())
-                    items[index]["data"]["NAMES"] = [items[index]["data"]["NAMES"][0], ...result]
-                    altNamesInput.value = item["data"]["NAMES"].slice(1).join(",")
-                    console.log(items)
-                });
-                altNamesCell.appendChild(altNamesInput)
-
-
-                var isActiveCell = newRow.insertCell(4)
-                var checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.id = "is-active-" + (index + 1);
-
-                checkbox.checked = item["data"]["IS_ACTIVE"]; 
-
-                checkbox.addEventListener('change', (event) => {
-                    items[index]["data"]["IS_ACTIVE"] = checkbox.checked
-                    console.log(items)
+                phoneInput.addEventListener('blur', (event) => {
+                    phoneInput.value = phoneInput.value.replace(/\D/g, '');
+                    customer["data"]["PHONE_NUMBER"] = phoneInput.value
+                    console.log(customers)
                 });
 
-                isActiveCell.appendChild(checkbox);
+                phoneCell.appendChild(phoneInput)
+
+
+                var customerTypeCell = newRow.insertCell(6)
+                var customerTypeInput = document.createElement("select")
+                customerTypeInput.id = "customer-type-" + (index + 1);
+
+                globals.getCustomerTypes().forEach(type => {
+                    const option = document.createElement("option")
+                    option.value = type
+                    option.textContent = type
+                    customerTypeInput.appendChild(option)
+                })
+                
+                customerTypeInput.value = customer["data"]["CUSTOMER_TYPE"]
+
+                customerTypeInput.addEventListener('change', (event) => {
+                    customer["data"]["CUSTOMER_TYPE"] = customerTypeInput.value
+                    console.log(customers)
+                });
+
+                customerTypeCell.appendChild(customerTypeInput)
             });
             
-            function addItem() {
+            function addCustomer(startingValues) {
                 var newRow = displayTable.insertRow(rowAmount - 1)
-                var newItemIndex = rowAmount - 2
                 rowAmount++
 
-                items.push({
+                customers.push({
                     "UUID": crypto.randomUUID(),
                     "data": {
-                        "ADDED_TIMESTAMP": Math.floor(Date.now() / 1000),
-                        "CURRENT_PRICE": 50,
-                        "IS_ACTIVE": false,
-                        "NAMES": ["תשנו אותי"]
+                        "GRADE": startingValues["GRADE"],
+                        "PHONE_NUMBER": startingValues["PHONE_NUMBER"],
+                        "NAME": startingValues["NAME"],
+                        "ROOM_NUMBER": startingValues["ROOM_NUMBER"],
+                        "CUSTOMER_TYPE": startingValues["CUSTOMER_TYPE"],
+                        "CURRENT_DEBT": startingValues["CURRENT_DEBT"]
                     }
                 })
-                var item = items[items.length - 1];
+                var customer = customers[customers.length - 1]
+                const index = customers.length - 1
 
                 var idCell = newRow.insertCell(0)
                 idCell.textContent = indexToWrite
@@ -128,98 +147,140 @@
                 var nameCell = newRow.insertCell(1)
                 var nameInput = document.createElement("input")
                 nameInput.type = "text";
-                nameInput.id = "name-" + (rowAmount - 1);
+                nameInput.id = "name-" + (index + 1);
 
-
-                nameInput.placeholder = "הכנס שם מוצר..."
-                nameInput.value = item["data"]["NAMES"][0]
+                nameInput.placeholder = "הכנס שם תלמיד..."
+                if (customer["data"]["NAME"] != undefined) {
+                    nameInput.value = customer["data"]["NAME"]
+                }
 
                 nameInput.addEventListener('blur', (event) => {
                     nameInput.value = nameInput.value.trim()
-                    items[newItemIndex]["data"]["NAMES"][0] = nameInput.value
-                    console.log(items)
+                    customer["data"]["NAME"] = nameInput.value
+                    console.log(customers)
                 });
                 nameCell.appendChild(nameInput)
 
 
-                var priceCell = newRow.insertCell(2)
-                var priceInput = document.createElement('input');
+                var debtCell = newRow.insertCell(2)
+                if (!Object.hasOwn(customer["data"]["CURRENT_DEBT"], String(globals.getOperatingGrade()))) {
+                    customer["data"]["CURRENT_DEBT"][String(globals.getOperatingGrade())] = 0
+                }
+                debtCell.textContent = customer["data"]["CURRENT_DEBT"][String(globals.getOperatingGrade())]/10;
 
-                priceInput.type = 'number';
 
-                priceInput.id = 'price-' + (rowAmount - 1);
-                priceInput.placeholder = "הכנס מחיר מוצר..."
-                priceInput.value = item["data"]["CURRENT_PRICE"]/10;
-                priceInput.min = '0.1';
-                priceInput.step = '0.1';
+                var roomCell = newRow.insertCell(3)
+                var roomInput = document.createElement('input');
 
-                priceInput.addEventListener('blur', (event) => {
-                    priceInput.value = Math.round(priceInput.value * 10) / 10
-                    items[newItemIndex]["data"]["CURRENT_PRICE"] = priceInput.value*10
-                    console.log(items)
+                roomInput.type = 'number';
+
+                roomInput.id = 'room-' + (rowAmount - 1);
+                roomInput.placeholder = "הכנס מס' חדר (עבור יומיים ניתן להכניס כל ערך)..."
+                roomInput.value = customer["data"]["ROOM_NUMBER"];
+                roomInput.step = '1';
+
+                roomInput.addEventListener('blur', (event) => {
+                    roomInput.value = parseInt(roomInput.value)
+                    customer["data"]["ROOM_NUMBER"] = roomInput.value
+                    console.log(customers)
                 });
 
-                priceCell.appendChild(priceInput)
+                roomCell.appendChild(roomInput)
 
+                
+                var gradeCell = newRow.insertCell(4)
+                var gradeInput = document.createElement('input');
 
-                var altNamesCell = newRow.insertCell(3)
-                var altNamesInput = document.createElement("input");
+                gradeInput.type = 'number';
 
-                altNamesInput.type = "text"
-                altNamesInput.id = "alt-names-" + (rowAmount - 1);
+                gradeInput.id = 'room-' + (rowAmount - 1);
+                gradeInput.placeholder = "הכנס שכבה (ערך מספרי, כ\"ב -> 22)..."
+                gradeInput.value = customer["data"]["GRADE"];
+                gradeInput.step = '1';
 
-                altNamesInput.placeholder = "הכנס שמות נוספים..."
-                altNamesInput.value = item["data"]["NAMES"].slice(1).join(",")
-
-                altNamesInput.addEventListener('blur', (event) => {
-                    var result = altNamesInput.value.split(",").map(element => element.trim())
-                    items[newItemIndex]["data"]["NAMES"] = [items[newItemIndex]["data"]["NAMES"][0], ...result]
-                    altNamesInput.value = item["data"]["NAMES"].slice(1).join(",")
-                    console.log(items)
+                gradeInput.addEventListener('blur', (event) => {
+                    gradeInput.value = parseInt(gradeInput.value)
+                    customer["data"]["GRADE"] = gradeInput.value
+                    console.log(customers)
                 });
-                altNamesCell.appendChild(altNamesInput)
+                gradeCell.appendChild(gradeInput)
 
 
-                var isActiveCell = newRow.insertCell(4)
-                var checkbox = document.createElement("input");
-                checkbox.type = "checkbox";
-                checkbox.id = "is-active-" + (rowAmount - 1);
+                var phoneCell = newRow.insertCell(5)
+                var phoneInput = document.createElement('input');
 
-                checkbox.checked = item["data"]["IS_ACTIVE"]; 
+                phoneInput.type = 'tel';
 
-                checkbox.addEventListener('change', (event) => {
-                    items[newItemIndex]["data"]["IS_ACTIVE"] = checkbox.checked
-                    console.log(items)
+                phoneInput.id = 'phone-' + (rowAmount - 1);
+                phoneInput.placeholder = "הכנס מס' טלפון..."
+                if (customer["data"]["PHONE_NUMBER"] != undefined) {
+                    phoneInput.value = customer["data"]["PHONE_NUMBER"];
+                }
+
+                phoneInput.addEventListener('blur', (event) => {
+                    phoneInput.value = phoneInput.value.replace(/\D/g, '');
+                    customer["data"]["PHONE_NUMBER"] = phoneInput.value
+                    console.log(customers)
                 });
 
-                isActiveCell.appendChild(checkbox);
+                phoneCell.appendChild(phoneInput)
+
+
+                var customerTypeCell = newRow.insertCell(6)
+                var customerTypeInput = document.createElement("select")
+                customerTypeInput.id = "customer-type-" + (index + 1);
+
+                globals.getCustomerTypes().forEach(type => {
+                    const option = document.createElement("option")
+                    option.value = type
+                    option.textContent = type
+                    customerTypeInput.appendChild(option)
+                })
+                
+                customerTypeInput.value = customer["data"]["CUSTOMER_TYPE"]
+
+                customerTypeInput.addEventListener('change', (event) => {
+                    customer["data"]["CUSTOMER_TYPE"] = customerTypeInput.value
+                    console.log(customers)
+                });
+
+                customerTypeCell.appendChild(customerTypeInput)
             }
 
-            document.getElementById("addItemButton").addEventListener("click", event => {
-                addItem()
+            document.getElementById("addCustomerButton").addEventListener("click", event => {
+                addCustomer({
+                        "GRADE": undefined,
+                        "PHONE_NUMBER": undefined,
+                        "NAME": undefined,
+                        "ROOM_NUMBER": undefined,
+                        "CUSTOMER_TYPE": undefined,
+                        "CURRENT_DEBT": {}
+                    })
             })
 
             document.getElementById("sendChangesButton").addEventListener("click", async event => {
-                await databaseHandler.updateItems(originalItems, items)
+                await databaseHandler.updateCustomers(originalCustomers, customers)
                 console.log("success")
             })
         </script>
-        <button id="sendChangesButton">שלח שינויים</button>
+        <button id="sendChangesButton">שמור שינויים</button>
 
-        <table id="itemsTable">
+        <table id="customersTable">
             <thead>
                 <tr>
                     <th>'מס</th>
                     <th>שם</th>
-                    <th>מחיר (שקלים)</th>
-                    <th>שמות נוספים</th>
-                    <th>האם פעיל</th>
+                    <th>חוב</th>
+                    <th>מס' חדר</th>
+                    <th>שכבה</th>
+                    <th>מס' טלפון</th>
+                    <th>סוג לקוח</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
                     <td>
-                        <button id="addItemButton">הוסף מוצר</button>
+                        <button id="addCustomerButton">הוסף לקוח</button>
                     </td>
                 </tr>
             </tbody>

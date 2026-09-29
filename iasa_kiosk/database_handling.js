@@ -4,8 +4,6 @@ import * as firestore from "https://www.gstatic.com/firebasejs/11.0.2/firebase-f
 export var firebaseDatabase
 export var firebaseAuthentication
 export var accessLevel 
-const currentYear = "36"
-
 
 export function updateVariables(accessLevel, apiKey, sellers) {
     sessionStorage.setItem("accessLevel", accessLevel)
@@ -14,11 +12,18 @@ export function updateVariables(accessLevel, apiKey, sellers) {
 }
 
 export async function init() {
-    encryption.firebaseConfig.apiKey = sessionStorage.getItem("firebaseApiKey")
-    await encryption.updateFirebaseReferences()
-    firebaseDatabase = encryption.firebaseDatabase
-    firebaseAuthentication = encryption.firebaseAuthentication
-    accessLevel = sessionStorage.getItem("accessLevel") // set once, at login, not re-derived every page
+    const tempApiKey = sessionStorage.getItem("firebaseApiKey")
+    if (tempApiKey != null) {
+        encryption.firebaseConfig.apiKey = sessionStorage.getItem("firebaseApiKey")
+        await encryption.updateFirebaseReferences()
+        firebaseDatabase = encryption.firebaseDatabase
+        firebaseAuthentication = encryption.firebaseAuthentication
+        accessLevel = sessionStorage.getItem("accessLevel") // set once, at login, not re-derived every page
+    }
+    else {
+        sessionStorage.setItem("wantedLocation", location.href)
+        location.href="./login.html"
+    }
 }
 
 // export function convertDatabaseDataToIntended(input) {
@@ -113,37 +118,88 @@ export async function updateItems(originalItems, newItems) {
     });
 }
 
-export async function getCustomersFromYears(years) {
+
+// returns a map containing the customers as pure data, and also the names as a map to the UUID, for fuzzy search
+export async function getCustomersFromGrades(grades) {
+    var orStatement = firestore.where("GRADE", "==", String(grades[0]))
+    for (var i = 1; i < grades.length; i++) {
+        orStatement = firestore.or(orStatement, firestore.where("GRADE", "==", String(grades[i])))
+    }
     const querySnapshot = await firestore.getDocs(
-        firestore.query(firestore.collection(firebaseDatabase, "CUSTOMERS"), firestore.orderBy("ADDED_TIMESTAMP"))
+        firestore.query(firestore.collection(firebaseDatabase, "CUSTOMERS"), orStatement, firestore.orderBy("GRADE"))
     );
 
-    const resultingArray = await Promise.all(
-        querySnapshot.docs.map(async (doc) => {
-            if (alsoPriceHistory) {
-                const priceHistorySnapshot = await firestore.getDocs(
-                    firestore.collection(firebaseDatabase, "ITEMS", doc.id, "PRICE_HISTORY")
-                );
-    
-                const tempArray = priceHistorySnapshot.docs.map((phDoc) => ({
-                    UUID: phDoc.id,
-                    data: phDoc.data(),
-                }));
-    
-                return {
-                    UUID: doc.id,
-                    data: doc.data(),
-                    price_history: tempArray,
-                };
-            }
-            else {
-                return {
-                    UUID: doc.id,
-                    data: doc.data()
-                };
-            }
+    const guestDoc = await firestore.getDoc(firestore.doc(firebaseDatabase, "CUSTOMERS", "GUEST"))
+
+    const nameUUIDMap = {
+        [guestDoc.data()["NAME"]]: guestDoc.id
+    }
+    const resultingArray = [
+        {
+            UUID: guestDoc.id,
+            data: guestDoc.data()
+        }
+    ]
+
+    querySnapshot.forEach((doc) => {
+        resultingArray.push({
+            UUID: doc.id,
+            data: doc.data()
         })
-    );
+        nameUUIDMap[[doc.data()["NAME"]]] = doc.id
+    })
 
-    return resultingArray;
+    return {
+        names: nameUUIDMap,
+        full_data: resultingArray
+    };
+}
+
+export async function updateCustomers(originalCustomers, newCustomers) {
+    await newCustomers.forEach(async (newCustomer, index) => {
+        const customerRef = firestore.doc(firebaseDatabase, "CUSTOMERS", newCustomer.UUID)
+        if (index < originalCustomers.length) {
+            var oldCustomer = originalCustomers[index]
+            var changes = {}
+
+            var anyChanges = false
+
+            if (oldCustomer["data"]["NAME"] != newCustomer["data"]["NAME"]) {
+                changes["NAME"] = newCustomer["data"]["NAME"]
+                anyChanges = true
+            }
+            if (oldCustomer["data"]["CURRENT_DEBT"] != newCustomer["data"]["CURRENT_DEBT"]) {
+                changes["CURRENT_DEBT"] = newCustomer["data"]["CURRENT_DEBT"]
+                anyChanges = true
+            }
+            if (oldCustomer["data"]["CUSTOMER_TYPE"] != newCustomer["data"]["CUSTOMER_TYPE"]) {
+                changes["CUSTOMER_TYPE"] = newCustomer["data"]["CUSTOMER_TYPE"]
+                anyChanges = true
+            }
+            if (oldCustomer["data"]["PHONE_NUMBER"] != newCustomer["data"]["PHONE_NUMBER"]) {
+                changes["PHONE_NUMBER"] = newCustomer["data"]["PHONE_NUMBER"]
+                anyChanges = true
+            }
+            if (oldCustomer["data"]["ROOM_NUMBER"] != newCustomer["data"]["ROOM_NUMBER"]) {
+                changes["ROOM_NUMBER"] = newCustomer["data"]["ROOM_NUMBER"]
+                anyChanges = true
+            }
+
+            if (Object.hasOwn(changes, "CUSTOMER_TYPE")) {
+                if (changes["CUSTOMER_TYPE"] != "פנימיסט") {
+                    changes["ROOM_NUMBER"] = "N/A"
+                }
+            }
+
+            if (anyChanges) {
+                await firestore.updateDoc(customerRef, changes)
+            }
+        }
+        else {
+            if (newCustomer["data"]["CUSTOMER_TYPE"] != "פנימיסט") {
+                newCustomer["data"]["ROOM_NUMBER"] = "N/A"
+            }
+            await firestore.setDoc(customerRef, newCustomer["data"])
+        }
+    });
 }

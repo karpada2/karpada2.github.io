@@ -12,26 +12,9 @@
         <script type="module">
             import * as encryption from "./encryption_and_security.js";
             import { updateVariables } from "./database_handling.js";
-
-            async function attemptLogIn() {
-                var password = document.getElementById("passwordInput").value
-                var success = await encryption.attemptUpdateFirebaseApiKey(password)
-                document.getElementById("logInSuccessIndicator").textContent = success ? "Logging In!" : "WRONG PASSWORD"
-                await encryption.updateFirebaseReferences()
-                if (success) {
-                    var authenticated = await encryption.authenticateWithPassword(password);
-                    updateVariables(authenticated, encryption.firebaseConfig.apiKey, document.getElementById("namesInput").value)
-                    if (authenticated == "admin") {
-                        location.href = "./admin_homepage.html"
-                    }
-                    else {
-                        location.href = "./homepage.html"
-                    }
-                }
-            }
             
             document.getElementById("logInButton").addEventListener('click', async () => {
-                await attemptLogIn();
+                await encryption.attemptLogIn(document.getElementById("passwordInput").value, document.getElementById("namesInput").value)
             });
         </script>
         <input type="text" id="namesInput" placeholder="Your Names"><br>

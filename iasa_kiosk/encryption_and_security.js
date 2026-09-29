@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import * as databaseHandler from "./database_handling.js"
 
 export const firebaseConfig = {
   apiKey: "",
@@ -96,6 +97,25 @@ async function decryptApiKey(password, encryptedKey, tagLengthIn = TAG_LENGTH, i
     )
 
     return new TextDecoder().decode(decrypted)
+}
+
+export async function attemptLogIn(password, names) {
+    var success = await attemptUpdateFirebaseApiKey(password)
+    document.getElementById("logInSuccessIndicator").textContent = success ? "Logging In!" : "WRONG PASSWORD"
+    await updateFirebaseReferences()
+    if (success) {
+        var authenticated = await authenticateWithPassword(password);
+        databaseHandler.updateVariables(authenticated, firebaseConfig.apiKey, names)
+        if (sessionStorage.getItem("wantedLocation") != null) {
+            location.href = sessionStorage.getItem("wantedLocation")
+        }
+        else if (authenticated == "admin") {
+            location.href = "./admin_homepage.html"
+        }
+        else {
+            location.href = "./homepage.html"
+        }
+    }
 }
 
 export async function attemptUpdateFirebaseApiKey(givenPassword) {
