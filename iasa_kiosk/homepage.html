@@ -9,29 +9,28 @@
 
 <html>
     <body>
-                <script type="module">
+        <script type="module">
             import * as databaseHandler from "./database_handling.js"
             import * as globals from "./global_variables.js"
+            import * as encryption from "./encryption_and_security.js"
 
             await databaseHandler.init()
             
-            function goToPurchasesLogger() {
-                location.href="./purchases_logger.html"
-            }
-            document.getElementById("purchasesLogger").addEventListener('click', goToPurchasesLogger);
+            for (var i in Object.keys(encryption.webPageData)) {
+                var page = Object.keys(encryption.webPageData)[i]
+                if (encryption.isPageAccessible(page, databaseHandler.accessLevel)) {
+                    const button = document.createElement("button")
+                    button.textContent = encryption.webPageData[[page]]["displayName"]
+                    button.addEventListener("click", () => {
+                        location.href = page
+                    })
 
-            function goToDebtChecker() {
-                location.href="./debt_checker.html"
+                    document.getElementById("buttonsContainer").appendChild(button)
+                }
             }
-            document.getElementById("debtChecker").addEventListener('click', goToDebtChecker);
-
-            function goToDebtPayments() {
-                location.href="./debt_payments.html"
-            }
-            document.getElementById("debtPayments").addEventListener('click', goToDebtPayments);
         </script>
-        <button id="purchasesLogger">רושם קניות</button>
-        <button id="debtChecker">בודק חובות</button>
-        <button id="debtPayments">תשלום חובות</button>
+        <div id="buttonsContainer">
+
+        </div>
     </body>
 </html>

@@ -4,13 +4,37 @@ import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager
 import * as databaseHandler from "./database_handling.js"
 
 
-export const requiredAccessLevels = {
-    "admin_homepage.html": ["admin"],
-    "customers_manager.html": ["admin"],
-    "items_manager.html": ["admin"],
-    "homepage.html": ["admin", "basic"],
-    "purchases_logger.html": ["admin", "basic"],
-    "debt_payments.html": ["admin", "basic"],
+export const webPageData = {
+    "customers_manager.html": {
+        "access": ["admin"],
+        "enabled": true,
+        "displayName": "מנהל לקוחות"
+    },
+    "items_manager.html": {
+        "access": ["admin"],
+        "enabled": true,
+        "displayName": "מנהל מוצרים"
+    },
+    "homepage.html": {
+        "access": ["admin", "basic"],
+        "enabled": false,
+        "displayName": "מסך בית"
+    },
+    "purchases_logger.html": {
+        "access": ["admin", "basic"],
+        "enabled": true,
+        "displayName": "רושם קניות"
+    },
+    "debt_payments.html": {
+        "access": ["admin", "basic"],
+        "enabled": true,
+        "displayName": "תשלום חובות"
+    },
+    "debt_checker.html": {
+        "access": ["admin", "basic"],
+        "enabled": true,
+        "displayName": "בדיקת חובות"
+    },
 }
 
 
@@ -110,6 +134,11 @@ async function decryptApiKey(password, encryptedKey, tagLengthIn = TAG_LENGTH, i
     return new TextDecoder().decode(decrypted)
 }
 
+export function isPageAccessible(pageInput, accessLevel) {
+    const page = pageInput.split('/').pop()
+    return webPageData[[page]]["enabled"] && webPageData[[page]]["access"].includes(accessLevel)
+}
+
 export async function attemptLogIn(password, names) {
     var success = await attemptUpdateFirebaseApiKey(password)
     document.getElementById("logInSuccessIndicator").textContent = success ? "Logging In!" : "WRONG PASSWORD"
@@ -117,16 +146,9 @@ export async function attemptLogIn(password, names) {
     if (success) {
         var authenticated = await authenticateWithPassword(password);
         databaseHandler.updateVariables(authenticated, firebaseConfig.apiKey, names)
-        var locationToSend = "login.html"
-        if (authenticated == "basic") {
-            locationToSend = "./homepage.html"
-        }
-        if (authenticated == "admin") {
-            locationToSend = "./admin_homepage.html"
-        }
+        var locationToSend = "homepage.html"
         if (sessionStorage.getItem("wantedLocation") != null) {
-            const pageName = sessionStorage.getItem("wantedLocation").split('/').pop();
-            if (requiredAccessLevels[pageName].includes(authenticated)) {
+            if (isPageAccessible(sessionStorage.getItem("wantedLocation"))) {
                 locationToSend = sessionStorage.getItem("wantedLocation")
             }
         }
