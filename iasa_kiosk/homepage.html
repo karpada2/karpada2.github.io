@@ -17,7 +17,7 @@
             await databaseHandler.init()
             
             for (var i in Object.keys(encryption.webPageData)) {
-                var page = Object.keys(encryption.webPageData)[i]
+                const page = Object.keys(encryption.webPageData)[i]
                 if (encryption.isPageAccessible(page, databaseHandler.accessLevel)) {
                     const button = document.createElement("button")
                     button.textContent = encryption.webPageData[[page]]["displayName"]
