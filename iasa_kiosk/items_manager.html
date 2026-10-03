@@ -104,7 +104,7 @@
                 isActiveCell.appendChild(checkbox);
             });
             
-            function addItem() {
+            function addItem(startingValues) {
                 var newRow = displayTable.insertRow(rowAmount - 1)
                 var newItemIndex = rowAmount - 2
                 rowAmount++
@@ -112,10 +112,10 @@
                 items.push({
                     "UUID": crypto.randomUUID(),
                     "data": {
-                        "ADDED_TIMESTAMP": Math.floor(Date.now() / 1000),
-                        "CURRENT_PRICE": 50,
-                        "IS_ACTIVE": false,
-                        "NAMES": ["תשנו אותי"]
+                        "ADDED_TIMESTAMP": startingValues["ADDED_TIMESTAMP"],
+                        "CURRENT_PRICE": startingValues["CURRENT_PRICE"],
+                        "IS_ACTIVE": startingValues["IS_ACTIVE"],
+                        "NAMES": startingValues["NAMES"]
                     }
                 })
                 var item = items[items.length - 1];
@@ -195,8 +195,30 @@
                 isActiveCell.appendChild(checkbox);
             }
 
+
+            function addItemsBatch(dataArray) {
+                console.log(dataArray)
+                for (var i = 0; i < dataArray.length; i++) {
+                    var altNames = []
+                    if (dataArray[i][2] !== undefined) {
+                        altNames = dataArray[i][2].split(",").map(element => element.trim())
+                    }
+                    addItem({
+                        "ADDED_TIMESTAMP": databaseHandler.getCurrentTimestamp(),
+                        "CURRENT_PRICE": parseInt(dataArray[i][1]*10),
+                        "IS_ACTIVE": dataArray[i][3] !== 0,
+                        "NAMES": [dataArray[i][0], ...altNames]
+                    })
+                }
+            }
+
             document.getElementById("addItemButton").addEventListener("click", event => {
-                addItem()
+                addItem({
+                    "ADDED_TIMESTAMP": databaseHandler.getCurrentTimestamp(),
+                    "CURRENT_PRICE": undefined,
+                    "IS_ACTIVE": false,
+                    "NAMES": [undefined]
+                })
             })
 
             document.getElementById("sendChangesButton").addEventListener("click", async event => {
@@ -204,8 +226,21 @@
                 originalItems = JSON.parse(JSON.stringify(items))
                 console.log("success")
             })
+
+            const fileInput = document.getElementById("inputFile")
+
+            document.getElementById("processFile").addEventListener("click", async event => {
+                if (fileInput.files != null && fileInput.files[0] != null) {
+                    addItemsBatch(await databaseHandler.parseSheet(fileInput.files[0]))
+                }
+            })
         </script>
-        <button id="sendChangesButton">שלח שינויים</button>
+        <button id="sendChangesButton">שלח שינויים</button><br>
+
+        <div>
+            <input type="file" id="inputFile" accept=".xlsx, .xls" />
+            <button id="processFile">הוסף את כל המוצרים מהקובץ!</button>
+        </div>
 
         <table id="itemsTable">
             <thead>

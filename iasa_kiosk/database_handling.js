@@ -1,6 +1,7 @@
 import * as encryption from "./encryption_and_security.js"
 import * as firestore from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import * as globals from "./global_variables.js"
+import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm";
 
 export var firebaseDatabase
 export var firebaseAuthentication
@@ -312,4 +313,26 @@ async function modifyDebt(customerUUID, modifyAmount) {
     await firestore.updateDoc(customerRef, {
         ["CURRENT_DEBT." + globals.getOperatingGrade()]: firestore.increment(modifyAmount)
     })
+}
+
+export function parseSheet(file) {
+    return new Promise((resolve, reject) => {
+        if (!file) return resolve(null);
+
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                resolve(XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false }));
+            } catch (err) {
+                reject(err);
+            }
+        };
+
+        reader.onerror = () => reject(reader.error);
+        reader.readAsArrayBuffer(file);
+    });
 }

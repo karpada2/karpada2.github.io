@@ -250,6 +250,19 @@
                 customerTypeCell.appendChild(customerTypeInput)
             }
 
+            function addCustomersBatch(dataArray) {
+                for (var i = 0; i < dataArray.length; i++) {
+                    addCustomer({
+                        "GRADE": dataArray[i][3],
+                        "PHONE_NUMBER": dataArray[i][1],
+                        "NAME": dataArray[i][0],
+                        "ROOM_NUMBER": dataArray[i][4],
+                        "CUSTOMER_TYPE": dataArray[i][2],
+                        "CURRENT_DEBT": {[globals.getOperatingGrade()]: parseInt(dataArray[i][5]*10)}
+                    })
+                }
+            }
+
             document.getElementById("addCustomerButton").addEventListener("click", event => {
                 addCustomer({
                         "GRADE": undefined,
@@ -266,8 +279,21 @@
                 originalCustomers = JSON.parse(JSON.stringify(customers))
                 console.log("success")
             })
+
+            const fileInput = document.getElementById("inputFile")
+
+            document.getElementById("processFile").addEventListener("click", async event => {
+                if (fileInput.files != null && fileInput.files[0] != null) {
+                    addCustomersBatch(await databaseHandler.parseSheet(fileInput.files[0]))
+                }
+            })
         </script>
-        <button id="sendChangesButton">שמור שינויים</button>
+        <button id="sendChangesButton">שמור שינויים</button><br>
+
+        <div>
+            <input type="file" id="inputFile" accept=".xlsx, .xls" />
+            <button id="processFile">הוסף את כל הלקוחות מהקובץ!</button>
+        </div>
 
         <table id="customersTable">
             <thead>
