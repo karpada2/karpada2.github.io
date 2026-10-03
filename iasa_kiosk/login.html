@@ -16,6 +16,8 @@
             document.getElementById("logInButton").addEventListener('click', async () => {
                 await encryption.attemptLogIn(document.getElementById("passwordInput").value, document.getElementById("namesInput").value)
             });
+
+            console.log(sessionStorage.getItem("wantedLocation"))
         </script>
         <input type="text" id="namesInput" placeholder="Your Names"><br>
         <input type="text" id="passwordInput" placeholder="Password"><br>

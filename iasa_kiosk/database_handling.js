@@ -2,6 +2,7 @@ import * as encryption from "./encryption_and_security.js"
 import * as firestore from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import * as globals from "./global_variables.js"
 import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm";
+import { setInfo } from "./global_variables.js"
 
 export var firebaseDatabase
 export var firebaseAuthentication
@@ -19,12 +20,13 @@ export async function init() {
         firebaseDatabase = encryption.firebaseDatabase
         firebaseAuthentication = encryption.firebaseAuthentication
         accessLevel = tempAccess // set once, at login, not re-derived every page
+        setInfo(await getGradesInfo())
         if (location.href.split('/').pop() != "homepage.html") {
             if (!encryption.isPageAccessible(location.href, accessLevel)) {
                 location.href="./homepage.html"
             }
-            else if (sessionStorage.getItem("wantedLocation") != null) {
-                location.href(sessionStorage.getItem("wantedLocation"))
+            else if (sessionStorage.getItem("wantedLocation") != null && location.href.split('/').pop() != sessionStorage.getItem("wantedLocation").split('/').pop()) {
+                location.href = sessionStorage.getItem("wantedLocation")
             }
         }
     }
@@ -341,4 +343,16 @@ export function parseSheet(file) {
         reader.onerror = () => reject(reader.error);
         reader.readAsArrayBuffer(file);
     });
+}
+
+export async function getGradesInfo() {
+    const ref = firestore.doc(firebaseDatabase, "OPERATION_INFO", "DATA")
+    const snapshot = await firestore.getDoc(ref)
+
+    return snapshot.data()
+}
+
+export async function setGradesInfo(info) {
+    const ref = firestore.doc(firebaseDatabase, "OPERATION_INFO", "DATA")
+    await firestore.updateDoc(ref, info)
 }

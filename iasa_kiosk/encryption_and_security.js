@@ -147,8 +147,7 @@ export async function attemptLogIn(password, names) {
         databaseHandler.updateVariables(authenticated, names)
         var locationToSend = "./homepage.html"
         if (sessionStorage.getItem("wantedLocation") != null) {
-            console.log(isPageAccessible(sessionStorage.getItem("wantedLocation")))
-            if (isPageAccessible(sessionStorage.getItem("wantedLocation"))) {
+            if (isPageAccessible(sessionStorage.getItem("wantedLocation"), authenticated)) {
                 locationToSend = sessionStorage.getItem("wantedLocation")
             }
         }

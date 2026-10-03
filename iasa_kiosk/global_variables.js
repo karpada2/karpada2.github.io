@@ -1,17 +1,16 @@
+var info = {}
+
+// should only be called from database_handling
+export function setInfo(newInfo) {
+    info = newInfo
+}
+
 export function getOperatingGrade() {
-    if (sessionStorage.getItem("operatingGrade") != null) {
-        return sessionStorage.getItem("operatingGrade")
-    }
-    sessionStorage.setItem("operatingGrade", "36")
-    return sessionStorage.getItem("operatingGrade")
+    return info["OPERATING_GRADE"]
 }
 
 export function getActiveGrades() {
-    if (sessionStorage.getItem("activeGrades") != null) {
-        return JSON.parse(sessionStorage.getItem("activeGrades"))
-    }
-    sessionStorage.setItem("activeGrades", "[\"36\", \"37\", \"38\"]")
-    return JSON.parse(sessionStorage.getItem("activeGrades"))
+    return info["ACTIVE_GRADES"]
 }
 
 export function getCustomerTypes() {

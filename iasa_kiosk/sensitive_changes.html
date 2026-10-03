@@ -44,6 +44,39 @@
                     adminPasswordOldInput.value = ""
                 }
             })
+
+            const operatingGrade = document.getElementById("operatingGrade")
+            const activeGrades = document.getElementById("activeGrades")
+
+            operatingGrade.value = globals.getOperatingGrade()
+            activeGrades.value = globals.getActiveGrades().join(", ")
+
+            document.addEventListener('keydown', function(event) {
+                // Check if the pressed key is 'Enter' and the active element is an input
+                if (event.key === 'Enter' && event.target.tagName === 'INPUT') {
+                    event.target.blur(); // Removes focus from the input
+                }
+            });
+
+            activeGrades.addEventListener('blur', (event) => {
+                var result = activeGrades.value.split(",").filter((element) => parseInt(element.trim()) > 0).map(element => String(parseInt(element.trim())))
+                activeGrades.value = result.join(", ")
+            });
+
+            operatingGrade.addEventListener("blur", (event) => {
+                operatingGrade.value = String(parseInt(operatingGrade.value.trim()))
+            })
+
+            document.getElementById("sendGradeChanges").addEventListener("click", async () => {
+                var info = {
+                    "OPERATING_GRADE": operatingGrade.value,
+                    "ACTIVE_GRADES": activeGrades.value.split(",").filter((element) => parseInt(element.trim()) > 0).map(element => String(parseInt(element.trim())))
+                }
+
+                await databaseHandler.setGradesInfo(info)
+
+                console.log("updated grades info")
+            })
         </script>
 
         <button id="sendPasswordChanges">שמור שינוי סיסמאות</button>
@@ -59,6 +92,11 @@
         <div id="adminPassword" hidden>
             <input type="text" id="adminCurrentPassword" placeholder="הכנס סיסמה נוכחית (ישנה)">
             <input type="text" id="adminNewPassword" placeholder="הכנס סיסמה חדשה">
+        </div><br><br>
+        <div id="gradesInfo">
+            <button id="sendGradeChanges">שמור נתוני שכבות</button>
+            <input type="text" id="operatingGrade" placeholder="הכנס מספר של שכבה מתפעלת">
+            <input type="text" id="activeGrades" placeholder="הכנס מספרים של שכבות פעילות (שלושת השכבות שכרגע בבית ספר)">
         </div>
     </body>
 </html>
