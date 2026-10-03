@@ -79,7 +79,7 @@
             })
         </script>
 
-        <button id="sendPasswordChanges">שמור שינוי סיסמאות</button>
+        <button id="sendPasswordChanges">שמור שינוי סיסמאות</button><br>
 
         <select id="userType">
             <option value="basic">שנה עבור משתמש בסיסי</option>
@@ -87,15 +87,20 @@
         </select>
 
         <div id="basicPassword">
+            <label for="basicNewPassword">סיסמה חדשה:</label>
             <input type="text" id="basicNewPassword" placeholder="הכנס סיסמה חדשה">
         </div>
         <div id="adminPassword" hidden>
-            <input type="text" id="adminCurrentPassword" placeholder="הכנס סיסמה נוכחית (ישנה)">
+            <label for="adminCurrentPassword">סיסמה נוכחית:</label>
+            <input type="text" id="adminCurrentPassword" placeholder="הכנס סיסמה נוכחית"><br>
+            <label for="adminNewPassword">סיסמה חדשה:</label>
             <input type="text" id="adminNewPassword" placeholder="הכנס סיסמה חדשה">
         </div><br><br>
         <div id="gradesInfo">
-            <button id="sendGradeChanges">שמור נתוני שכבות</button>
-            <input type="text" id="operatingGrade" placeholder="הכנס מספר של שכבה מתפעלת">
+            <button id="sendGradeChanges">שמור נתוני שכבות</button><br>
+            <label for="operatingGrade">הכנס שכבה מתפעלת:</label>
+            <input type="text" id="operatingGrade" placeholder="הכנס מספר של שכבה מתפעלת"><br>
+            <label for="activeGrades">הכנס שכבות פעילות:</label>
             <input type="text" id="activeGrades" placeholder="הכנס מספרים של שכבות פעילות (שלושת השכבות שכרגע בבית ספר)">
         </div>
     </body>

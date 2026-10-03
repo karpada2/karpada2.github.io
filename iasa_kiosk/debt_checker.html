@@ -71,10 +71,11 @@
             function updatePersonalDebt() {
                 const debt = baseCustomers[customerNameUUIDMap[selectedName]]["CURRENT_DEBT"][globals.getOperatingGrade()]
                 if (debt == undefined) {
-                    debt = 0
+                    document.getElementById("personalDebtShowcase").textContent = ""
                 }
-                
-                document.getElementById("personalDebtShowcase").textContent = debt/10
+                else {
+                    document.getElementById("personalDebtShowcase").textContent = debt/10                
+                }
             }
 
             function updateDebtsList(debts) {
@@ -96,13 +97,13 @@
             })
         </script>
         <div class="autocomplete" id="personalDebtChecker">
-            <label for="customerNameInput">:הכנס שם לקוח</label>
+            <label for="customerNameInput">הכנס שם לקוח:</label>
             <input type="text" id="customerNameInput" autocomplete="off">
             <ul id="customerList" class="autoCompleteList" hidden></ul>
             <p id="personalDebtShowcase"></p>
         </div><br>
         <div id="roomDebtChecker">
-            <label for="roomNumberInput">:הכנס מספר חדר</label>
+            <label for="roomNumberInput">הכנס מספר חדר:</label>
             <input type="number" min="1" max="92" step="1" id="roomNumberInput">
             <ul id="debtsList"></ul>
         </div><br>

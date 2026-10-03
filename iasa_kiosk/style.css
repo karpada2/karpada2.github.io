@@ -1,70 +1,196 @@
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-family: Arial, sans-serif;
-    margin-top: 20px;
-}
-th, td {
-    border: 1px solid #ddd;
-    padding: 12px;
-    text-align: left;
-}
-th {
-    background-color: #f4f4f4;
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f6;
     color: #333;
+    margin: 0;
+    padding: 20px;
+    direction: rtl;
 }
-/* Style inputs to cleanly fit inside the table cells */
+
+body > div, body > label {
+    margin-bottom: 10px;
+}
+
 input[type="text"], 
-input[type="email"], 
 input[type="number"], 
+input[type="tel"], 
+input[type="password"], 
 select {
     width: 100%;
-    padding: 8px;
-    box-sizing: border-box; /* Ensures padding doesn't affect width */
+    max-width: 400px;
+    padding: 10px;
+    margin: 5px 0 15px 0;
+    box-sizing: border-box;
     border: 1px solid #ccc;
-    border-radius: 4px;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s, box-shadow 0.3s;
 }
+
+input:focus, select:focus {
+    border-color: #007BFF;
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+input[type="file"] {
+    margin: 15px 0;
+    font-size: 16px;
+}
+
 button {
     padding: 10px 20px;
     background-color: #007BFF;
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
     cursor: pointer;
-    margin-top: 15px;
+    font-size: 16px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    transition: background-color 0.2s, transform 0.1s;
 }
+
 button:hover {
     background-color: #0056b3;
 }
+
+button:active {
+    transform: scale(0.98);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+th, td {
+    border: 1px solid #e0e0e0;
+    padding: 12px;
+    text-align: right;
+}
+
+th {
+    background-color: #007BFF;
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+td input[type="text"], 
+td input[type="number"], 
+td input[type="tel"], 
+td select {
+    max-width: 100%;
+    margin: 0;
+    padding: 8px;
+}
+
 .autocomplete {
-  position: relative;
-  display: inline-block;
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    max-width: 400px;
+}
+
+.autocomplete input {
+    max-width: 100%;
 }
 
 .autoCompleteList {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  background: #fff;
-  border: 1px solid #ccc;
-  max-height: 200px;
-  overflow-y: auto;
-  z-index: 10;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-top: none;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 100;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .autoCompleteList[hidden] {
-  display: none;
+    display: none;
 }
 
 .autoCompleteList li {
-  padding: 4px 8px;
-  cursor: pointer;
+    padding: 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.2s;
 }
 
 .autoCompleteList li:hover {
-  background: #eee;
+    background: #f0f8ff;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+p, span, div {
+    font-size: 16px;
+}
+
+#priceShowcase, #personalDebtShowcase, #logInSuccessIndicator {
+    font-weight: bold;
+    font-size: 20px;
+    margin-top: 10px;
+}
+
+#priceShowcase {
+    color: #28a745;
+}
+
+#personalDebtShowcase {
+    color: #dc3545;
+}
+
+ul#debtsList {
+    list-style-type: none;
+    padding: 0;
+}
+
+ul#debtsList li {
+    background: #fff;
+    margin-bottom: 5px;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    max-width: 400px;
+}
+
+#buttonsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 400px;
+    margin: 40px auto;
+}
+
+#buttonsContainer button {
+    width: 100%;
+    padding: 15px;
+    font-size: 18px;
+    border-radius: 8px;
 }

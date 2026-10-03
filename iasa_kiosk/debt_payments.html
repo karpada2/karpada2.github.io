@@ -73,20 +73,24 @@
             });
             
                         
-            document.getElementById("savePayment").addEventListener("click", () => {
+            document.getElementById("savePayment").addEventListener("click", async () => {
                 if (selectedName != null) {
-                    databaseHandler.savePayment(customerNameUUIDMap[selectedName], paymentSizeInput.value*10, document.getElementById("paymentMethod").value == "cash")
+                    await databaseHandler.savePayment(customerNameUUIDMap[selectedName], paymentSizeInput.value*10, document.getElementById("paymentMethod").value == "cash")
+                    customerNameInput.value = ""
+                    paymentSizeInput.value = 0
                 }
             })
         </script>
 
         <button id="savePayment">תשלם!</button><br>
         <div class="autocomplete">
-            <label for="customerNameInput">:הכנס שם לקוח</label>
+            <label for="customerNameInput">הכנס שם לקוח:</label>
             <input type="text" id="customerNameInput" autocomplete="off">
             <ul id="customerList" class="autoCompleteList" hidden></ul>
         </div><br>
-        <input type="number" id="paymentSizeInput" min="0.1" step="0.1" placeholder="הכנס מחיר מוצר...">
+        <label for="paymentSizeInput">הכנס מחיר מוצר:</label>
+        <input type="number" id="paymentSizeInput" min="0.1" step="0.1" placeholder="הכנס מחיר מוצר..."><br>
+        <label for="paymentMethod">דרך תשלום:</label>
         <select name="דרך תשלום" id="paymentMethod">
             <option value="cash">מזומן</option>
             <option value="bit">ביט</option>
