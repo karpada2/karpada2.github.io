@@ -263,6 +263,7 @@
 
             document.getElementById("sendChangesButton").addEventListener("click", async event => {
                 await databaseHandler.updateCustomers(originalCustomers, customers)
+                originalCustomers = JSON.parse(JSON.stringify(customers))
                 console.log("success")
             })
         </script>

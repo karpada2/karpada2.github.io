@@ -201,6 +201,7 @@
 
             document.getElementById("sendChangesButton").addEventListener("click", async event => {
                 await databaseHandler.updateItems(originalItems, items)
+                originalItems = JSON.parse(JSON.stringify(items))
                 console.log("success")
             })
         </script>
