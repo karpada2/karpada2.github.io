@@ -16,6 +16,8 @@
 
             await databaseHandler.init()
 
+            const perfectScoreTolerance = 0.001
+
             var allItemsNames = await databaseHandler.getItemsDataForPurchases()
             var allItemsPrimaryNames = allItemsNames["names"].map(names => (names[0]))
             var allCustomers = await databaseHandler.getCustomersFromGrades(globals.getActiveGrades())
