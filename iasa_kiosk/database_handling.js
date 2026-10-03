@@ -7,20 +7,26 @@ export var firebaseDatabase
 export var firebaseAuthentication
 export var accessLevel 
 
-export function updateVariables(accessLevel, apiKey, sellers) {
+export function updateVariables(accessLevel, sellers) {
     sessionStorage.setItem("accessLevel", accessLevel)
-    sessionStorage.setItem("firebaseApiKey", apiKey)
     sessionStorage.setItem("sellersNames", sellers)
 }
 
 export async function init() {
-    const tempApiKey = sessionStorage.getItem("firebaseApiKey")
-    if (tempApiKey != null) {
-        encryption.firebaseConfig.apiKey = sessionStorage.getItem("firebaseApiKey")
+    const tempAccess = sessionStorage.getItem("accessLevel")
+    if (tempAccess != null) {
         await encryption.updateFirebaseReferences()
         firebaseDatabase = encryption.firebaseDatabase
         firebaseAuthentication = encryption.firebaseAuthentication
-        accessLevel = sessionStorage.getItem("accessLevel") // set once, at login, not re-derived every page
+        accessLevel = tempAccess // set once, at login, not re-derived every page
+        if (location.href.split('/').pop() != "homepage.html") {
+            if (!encryption.isPageAccessible(location.href, accessLevel)) {
+                location.href="./homepage.html"
+            }
+            else if (sessionStorage.getItem("wantedLocation") != null) {
+                location.href(sessionStorage.getItem("wantedLocation"))
+            }
+        }
     }
     else {
         sessionStorage.setItem("wantedLocation", location.href)

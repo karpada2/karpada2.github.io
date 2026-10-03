@@ -1,9 +1,17 @@
 export function getOperatingGrade() {
-    return "36"
+    if (sessionStorage.getItem("operatingGrade") != null) {
+        return sessionStorage.getItem("operatingGrade")
+    }
+    sessionStorage.setItem("operatingGrade", "36")
+    return sessionStorage.getItem("operatingGrade")
 }
 
 export function getActiveGrades() {
-    return ["36", "37", "38"]
+    if (sessionStorage.getItem("activeGrades") != null) {
+        return JSON.parse(sessionStorage.getItem("activeGrades"))
+    }
+    sessionStorage.setItem("activeGrades", "[\"36\", \"37\", \"38\"]")
+    return JSON.parse(sessionStorage.getItem("activeGrades"))
 }
 
 export function getCustomerTypes() {

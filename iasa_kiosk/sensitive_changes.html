@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/jpeg" href="/iasa_kiosk/kiosk_favicon.jpeg">
+</head>
+
+
+<html>
+    <body>
+        <script type="module">
+            import * as databaseHandler from "./database_handling.js"
+            import * as globals from "./global_variables.js"
+            import * as encryption from "./encryption_and_security.js"
+
+            await databaseHandler.init()
+
+            const userTypeSelect = document.getElementById("userType")
+
+            const basicPasswordSelect = document.getElementById("basicPassword")
+            const basicPasswordNewInput = document.getElementById("basicNewPassword")
+            
+            const adminPasswordSelect = document.getElementById("adminPassword")
+            const adminPasswordOldInput = document.getElementById("adminCurrentPassword")
+            const adminPasswordNewInput = document.getElementById("adminNewPassword")
+
+
+            userTypeSelect.addEventListener("change", () => {
+                basicPasswordSelect.hidden = userTypeSelect.value != "basic"
+                adminPasswordSelect.hidden = userTypeSelect.value != "admin"
+            })
+
+            document.getElementById("sendPasswordChanges").addEventListener("click", async () => {
+                if (userTypeSelect.value == "basic") {
+                    await encryption.setBasicPassword(basicPasswordNewInput.value)
+                    console.log("basic password changed successfully")
+                    basicPasswordNewInput.value = ""
+                }
+                else if (userTypeSelect.value == "admin") {
+                    await encryption.setAdminPassword(adminPasswordOldInput.value, adminPasswordNewInput.value)
+                    console.log("admin password changed successfully")
+                    adminPasswordNewInput.value = ""
+                    adminPasswordOldInput.value = ""
+                }
+            })
+        </script>
+
+        <button id="sendPasswordChanges">שמור שינוי סיסמאות</button>
+
+        <select id="userType">
+            <option value="basic">שנה עבור משתמש בסיסי</option>
+            <option value="admin">שנה עבור משתמש מנהל</option>
+        </select>
+
+        <div id="basicPassword">
+            <input type="text" id="basicNewPassword" placeholder="הכנס סיסמה חדשה">
+        </div>
+        <div id="adminPassword" hidden>
+            <input type="text" id="adminCurrentPassword" placeholder="הכנס סיסמה נוכחית (ישנה)">
+            <input type="text" id="adminNewPassword" placeholder="הכנס סיסמה חדשה">
+        </div>
+    </body>
+</html>

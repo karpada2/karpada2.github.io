@@ -1,10 +1,15 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import * as databaseHandler from "./database_handling.js"
 
 
 export const webPageData = {
+    "sensitive_changes.html": {
+        "access": ["admin"],
+        "enabled": true,
+        "displayName": "שינוי נתונים רגישים"
+    },
     "customers_manager.html": {
         "access": ["admin"],
         "enabled": true,
@@ -39,7 +44,7 @@ export const webPageData = {
 
 
 export const firebaseConfig = {
-  apiKey: "",
+  apiKey: "AIzaSyBfC4brPJTAZzndxPmgt4PMRns2emjR71Y",
 
   authDomain: "iasa-kiosk-temp.firebaseapp.com",
 
@@ -58,12 +63,6 @@ export const firebaseConfig = {
 export var firebaseApp
 export var firebaseDatabase
 export var firebaseAuthentication
-
-
-const firebaseEncryptedApiKey = "F3ssR1AjwtOV3MLEwEaKXI+x8dhTLBG2P4Rajo6KqtEk+xGCBWOkEThOaCi5lEWKNdR6mRKle2l7MtBDCW61n43nYJw8mtvfU9ihU04PsgbxG1g="
-const firebaseAdminEncryptedApiKey = "A6jMgX6vMiN6WExH67qiaJzy9hwtJRPbEPOM4FZZwoqmO/bCHh/RNAf10NsJqxG4UEak/qwntaCpE7oywn8YPd/ZFCF96IShPVPIH24jBtGJs5o="
-const passwordHash = "b7b740f4a0a1ff37e44086f74949b6b3cc6b81431669e33c9b68e66428099b4c"
-const adminPasswordHash = "a3eff3d2332a6be2802e7cf6f4dd6454a8e42270c5ef6251a5eb7cf3f1004c97"
 
 
 export async function SHA_256(password) {
@@ -140,32 +139,21 @@ export function isPageAccessible(pageInput, accessLevel) {
 }
 
 export async function attemptLogIn(password, names) {
-    var success = await attemptUpdateFirebaseApiKey(password)
-    document.getElementById("logInSuccessIndicator").textContent = success ? "Logging In!" : "WRONG PASSWORD"
     await updateFirebaseReferences()
+    var authenticated = await authenticateWithPassword(password);
+    var success = authenticated != "invalid"
+    document.getElementById("logInSuccessIndicator").textContent = success ? "Logging In!" : "WRONG PASSWORD"
     if (success) {
-        var authenticated = await authenticateWithPassword(password);
-        databaseHandler.updateVariables(authenticated, firebaseConfig.apiKey, names)
-        var locationToSend = "homepage.html"
+        databaseHandler.updateVariables(authenticated, names)
+        var locationToSend = "./homepage.html"
         if (sessionStorage.getItem("wantedLocation") != null) {
+            console.log(isPageAccessible(sessionStorage.getItem("wantedLocation")))
             if (isPageAccessible(sessionStorage.getItem("wantedLocation"))) {
                 locationToSend = sessionStorage.getItem("wantedLocation")
             }
         }
         location.href = locationToSend
     }
-}
-
-export async function attemptUpdateFirebaseApiKey(givenPassword) {
-    if (await SHA_256(givenPassword) == passwordHash) {
-        firebaseConfig.apiKey = await decryptApiKey(givenPassword, firebaseEncryptedApiKey)
-        return true
-    }
-    else if (await SHA_256(givenPassword) == adminPasswordHash) {
-        firebaseConfig.apiKey = await decryptApiKey(givenPassword, firebaseAdminEncryptedApiKey)
-        return true
-    }
-    return false
 }
 
 export function updateFirebaseReferences() {
@@ -194,7 +182,27 @@ export async function authenticateWithPassword(passwordInput) {
       return "basic";
     } catch (basicError) {
       console.error("Authentication failed: Invalid password.");
-      throw new Error("Invalid password");
+      return "invalid";
     }
   }
+}
+
+export async function setBasicPassword(newPassword) {
+  const token = await firebaseAuthentication.currentUser.getIdToken();
+  const res = await fetch("https://pw-worker.iasa-kiosk-password-manager.workers.dev", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ newPassword }),
+  });
+  if (!res.ok) throw new Error((await res.json()).error);
+}
+
+export async function setAdminPassword(currentPassword, newPassword) {
+    const user = getAuth().currentUser;
+    const cred = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, cred); // avoids auth/requires-recent-login
+    await updatePassword(user, newPassword);
 }
