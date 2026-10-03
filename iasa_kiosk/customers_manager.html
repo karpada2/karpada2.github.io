@@ -47,7 +47,6 @@
                 nameInput.addEventListener('blur', (event) => {
                     nameInput.value = nameInput.value.trim()
                     customer["data"]["NAME"] = nameInput.value
-                    console.log(customers)
                 });
                 nameCell.appendChild(nameInput)
 
@@ -72,7 +71,6 @@
                 roomInput.addEventListener('blur', (event) => {
                     roomInput.value = parseInt(roomInput.value)
                     customer["data"]["ROOM_NUMBER"] = roomInput.value
-                    console.log(customers)
                 });
 
                 roomCell.appendChild(roomInput)
@@ -94,7 +92,6 @@
                 phoneInput.addEventListener('blur', (event) => {
                     phoneInput.value = phoneInput.value.replace(/\D/g, '');
                     customer["data"]["PHONE_NUMBER"] = phoneInput.value
-                    console.log(customers)
                 });
 
                 phoneCell.appendChild(phoneInput)
@@ -115,7 +112,6 @@
 
                 customerTypeInput.addEventListener('change', (event) => {
                     customer["data"]["CUSTOMER_TYPE"] = customerTypeInput.value
-                    console.log(customers)
                 });
 
                 customerTypeCell.appendChild(customerTypeInput)
@@ -157,7 +153,6 @@
                 nameInput.addEventListener('blur', (event) => {
                     nameInput.value = nameInput.value.trim()
                     customer["data"]["NAME"] = nameInput.value
-                    console.log(customers)
                 });
                 nameCell.appendChild(nameInput)
 
@@ -166,7 +161,19 @@
                 if (!Object.hasOwn(customer["data"]["CURRENT_DEBT"], String(globals.getOperatingGrade()))) {
                     customer["data"]["CURRENT_DEBT"][String(globals.getOperatingGrade())] = 0
                 }
-                debtCell.textContent = customer["data"]["CURRENT_DEBT"][String(globals.getOperatingGrade())]/10;
+                var debtInput = document.createElement('input');
+                debtInput.type = 'number';
+
+                debtInput.id = 'debt-' + (rowAmount - 1);
+                debtInput.placeholder = "הכנס חוב נוכחי..."
+                debtInput.value = customer["data"]["CURRENT_DEBT"][String(globals.getOperatingGrade())]/10;
+                debtInput.step = '0.1';
+
+                debtInput.addEventListener('blur', (event) => {
+                    customer["data"]["CURRENT_DEBT"][globals.getOperatingGrade()] = parseInt(debtInput.value * 10)
+                });
+
+                debtCell.appendChild(debtInput)
 
 
                 var roomCell = newRow.insertCell(3)
@@ -182,7 +189,6 @@
                 roomInput.addEventListener('blur', (event) => {
                     roomInput.value = parseInt(roomInput.value)
                     customer["data"]["ROOM_NUMBER"] = roomInput.value
-                    console.log(customers)
                 });
 
                 roomCell.appendChild(roomInput)
@@ -201,7 +207,6 @@
                 gradeInput.addEventListener('blur', (event) => {
                     gradeInput.value = parseInt(gradeInput.value)
                     customer["data"]["GRADE"] = gradeInput.value
-                    console.log(customers)
                 });
                 gradeCell.appendChild(gradeInput)
 
@@ -220,7 +225,6 @@
                 phoneInput.addEventListener('blur', (event) => {
                     phoneInput.value = phoneInput.value.replace(/\D/g, '');
                     customer["data"]["PHONE_NUMBER"] = phoneInput.value
-                    console.log(customers)
                 });
 
                 phoneCell.appendChild(phoneInput)
@@ -241,7 +245,6 @@
 
                 customerTypeInput.addEventListener('change', (event) => {
                     customer["data"]["CUSTOMER_TYPE"] = customerTypeInput.value
-                    console.log(customers)
                 });
 
                 customerTypeCell.appendChild(customerTypeInput)

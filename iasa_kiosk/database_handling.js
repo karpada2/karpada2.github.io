@@ -51,7 +51,7 @@ export function getCurrentTimestamp() {
 
 export async function getAllItems(alsoPriceHistory = false) {
     const querySnapshot = await firestore.getDocs(
-        firestore.query(firestore.collection(firebaseDatabase, "ITEMS"), firestore.orderBy("ADDED_TIMESTAMP"))
+        firestore.query(firestore.collection(firebaseDatabase, "ITEMS"), firestore.where("ADDED_TIMESTAMP", "!=", 0), firestore.orderBy("ADDED_TIMESTAMP"))
     );
 
     const resultingArray = await Promise.all(
@@ -222,14 +222,14 @@ export async function updateCustomers(originalCustomers, newCustomers) {
             var changes = {}
 
             var anyChanges = false
+            var debtChange = false
 
             if (oldCustomer["data"]["NAME"] != newCustomer["data"]["NAME"]) {
                 changes["NAME"] = newCustomer["data"]["NAME"]
                 anyChanges = true
             }
             if (oldCustomer["data"]["CURRENT_DEBT"] != newCustomer["data"]["CURRENT_DEBT"]) {
-                changes["CURRENT_DEBT"] = newCustomer["data"]["CURRENT_DEBT"]
-                anyChanges = true
+                debtChange = true
             }
             if (oldCustomer["data"]["CUSTOMER_TYPE"] != newCustomer["data"]["CUSTOMER_TYPE"]) {
                 changes["CUSTOMER_TYPE"] = newCustomer["data"]["CUSTOMER_TYPE"]
@@ -264,7 +264,20 @@ export async function updateCustomers(originalCustomers, newCustomers) {
             if (newCustomer["data"]["CUSTOMER_TYPE"] == "צוות") {
                 newCustomer["data"]["GRADE"] = "N/A"
             }
+            const diff = newCustomer["data"]["CURRENT_DEBT"][globals.getOperatingGrade()]
+            if (diff != 0) {
+                newCustomer["data"]["CURRENT_DEBT"][globals.getOperatingGrade()] = 0
+            }
             await firestore.setDoc(customerRef, newCustomer["data"])
+
+            if (diff > 0) { // means his debt grew, fake purchase should be logged
+                await firestore.setDoc(firestore.doc(firebaseDatabase, "ITEMS", "FAKE_ITEM"), {"CURRENT_PRICE": diff})
+                await firestore.setDoc(firestore.doc(firebaseDatabase, "ITEMS", "FAKE_ITEM", "PRICE_HISTORY", crypto.randomUUID()), {"PRICE": diff, "TIMESTAMP": getCurrentTimestamp()})
+                await savePurchase(newCustomer.UUID, "FAKE_ITEM", 1, diff)
+            }
+            else if (diff < 0) { // means his debt shrank, fake payment should be logged
+                await savePayment(newCustomer.UUID, -diff, false) // maybe false is bad idea, idc right now, this should only happen in the transition period (so only this year)
+            }
         }
     });
 }
