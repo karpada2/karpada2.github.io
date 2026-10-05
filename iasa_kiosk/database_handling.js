@@ -302,6 +302,11 @@ export async function savePurchase(customerUUID, itemUUID, amount, totalPrice) {
         "TIMESTAMP": getCurrentTimestamp()
     })
     await modifyDebt(customerUUID, totalPrice)
+    await firestore.updateDoc(
+        firestore.doc(firebaseDatabase, "MONEY_INFO", "INFO"), {
+            ["UNCLAIMED_DEBTS." + globals.getOperatingGrade()]: firestore.increment(totalPrice)
+        }
+    )
 }
 
 export async function savePayment(customerUUID, paymentSize, isMethodCash) {
@@ -314,6 +319,12 @@ export async function savePayment(customerUUID, paymentSize, isMethodCash) {
         "TIMESTAMP": getCurrentTimestamp()
     })
     await modifyDebt(customerUUID, -paymentSize)
+    await firestore.updateDoc(
+        firestore.doc(firebaseDatabase, "MONEY_INFO", "INFO"), {
+            ["CLAIMED_REVENUE." + globals.getOperatingGrade()]: firestore.increment(paymentSize),
+            ["UNCLAIMED_DEBTS." + globals.getOperatingGrade()]: firestore.increment(-paymentSize)
+        }
+    )
 }
 
 async function modifyDebt(customerUUID, modifyAmount) {
@@ -355,4 +366,14 @@ export async function getGradesInfo() {
 export async function setGradesInfo(info) {
     const ref = firestore.doc(firebaseDatabase, "OPERATION_INFO", "DATA")
     await firestore.updateDoc(ref, info)
+}
+
+export async function getRevenueInfo() {
+    const ref = firestore.doc(firebaseDatabase, "MONEY_INFO", "INFO")
+    const snapshot = await firestore.getDoc(ref)
+
+    return {
+        "CLAIMED": snapshot.data()["CLAIMED_REVENUE"][globals.getOperatingGrade()],
+        "UNCLAIMED": snapshot.data()["UNCLAIMED_DEBTS"][globals.getOperatingGrade()]
+    }
 }

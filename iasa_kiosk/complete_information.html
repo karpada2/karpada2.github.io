@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/jpeg" href="/iasa_kiosk/kiosk_favicon.jpeg">
+</head>
+
+
+<html>
+    <body>
+        <script type="module">
+            import * as databaseHandler from "./database_handling.js"
+            import * as globals from "./global_variables.js"
+            import * as encryption from "./encryption_and_security.js"
+
+            await databaseHandler.init()
+
+            const info = await databaseHandler.getRevenueInfo()
+
+            console.log(info)
+
+            document.getElementById("revenue").textContent = (info["CLAIMED"]/10).toFixed(2)
+            document.getElementById("unclaimedDebts").textContent = (info["UNCLAIMED"]/10).toFixed(2)
+            document.getElementById("totalRevenue").textContent = ((info["CLAIMED"] + info["UNCLAIMED"])/10).toFixed(2)
+        </script>
+        <div>
+            <p>סה"כ רווח שנאסף:</p>
+            <p id="revenue"></p>
+        </div>
+        <div>
+            <p>סה"כ חובות שלא שולמו:</p>
+            <p id="unclaimedDebts"></p>
+        </div>
+        <div>
+            <p>סה"כ רווח משוער:</p>
+            <p id="totalRevenue"></p>
+        </div>
+    </body>
+</html>

@@ -19,6 +19,7 @@
             const perfectScoreTolerance = 0.001
 
             var allCustomers = await databaseHandler.getCustomersFromGrades(globals.getActiveGrades())
+            var baseCustomers = await databaseHandler.getCustomersFromGradesOriginalData(globals.getActiveGrades())
             var customerNameUUIDMap = allCustomers["names"]
             const allCustomersNames = Object.keys(customerNameUUIDMap)
 
@@ -35,6 +36,19 @@
             const customerNameInput = document.getElementById("customerNameInput")
             const customerList = document.getElementById("customerList")
             var selectedName = null
+
+            function updateDebtDisplay() {
+                if (selectedName == null) {
+                    document.getElementById("personalDebt").textContent = "0.00"
+                }
+                const debt = baseCustomers[customerNameUUIDMap[selectedName]]["CURRENT_DEBT"][globals.getOperatingGrade()]
+                if (debt == undefined) {
+                    document.getElementById("personalDebt").textContent = "0.00"
+                }
+                else {
+                    document.getElementById("personalDebt").textContent = (debt/10).toFixed(2)              
+                }
+            }
             
             function renderCustomerList(names) {
                 customerList.replaceChildren()
@@ -44,6 +58,7 @@
                     li.addEventListener("mousedown", (e) => {
                         e.preventDefault()               // keeps input from blurring first
                         selectedName = name
+                        updateDebtDisplay()
                         customerNameInput.value = li.textContent
                         customerList.hidden = true
                     })
@@ -58,11 +73,12 @@
             }
             
             customerNameInput.addEventListener("focus", refreshCustomers)
-            customerNameInput.addEventListener("input", () => { selectedName = null; refreshCustomers() })
+            customerNameInput.addEventListener("input", () => { selectedName = null; refreshCustomers(); updateDebtDisplay() })
             customerNameInput.addEventListener("blur", () => {
                 customerList.hidden = true;
                 if (customerSearch.search(customerNameInput.value.trim())[0].score < perfectScoreTolerance) {
                     selectedName = customerNameInput.value.trim()
+                    updateDebtDisplay()
                 }
             })
 
@@ -72,7 +88,7 @@
                 paymentSizeInput.value = Math.round(paymentSizeInput.value * 10) / 10
             });
             
-                        
+            
             document.getElementById("savePayment").addEventListener("click", async () => {
                 if (selectedName != null) {
                     await databaseHandler.savePayment(customerNameUUIDMap[selectedName], paymentSizeInput.value*10, document.getElementById("paymentMethod").value == "cash")
@@ -88,8 +104,10 @@
             <input type="text" id="customerNameInput" autocomplete="off">
             <ul id="customerList" class="autoCompleteList" hidden></ul>
         </div><br>
-        <label for="paymentSizeInput">הכנס מחיר מוצר:</label>
-        <input type="number" id="paymentSizeInput" min="0.1" step="0.1" placeholder="הכנס מחיר מוצר..."><br>
+        <p>חוב נוכחי:</p>
+        <p id="personalDebt">0.00</p>
+        <label for="paymentSizeInput">הכנס כמות כסף לתשלום:</label>
+        <input type="number" id="paymentSizeInput" min="0.1" step="0.1" placeholder="הכנס כמות כסף לתשלום..."><br>
         <label for="paymentMethod">דרך תשלום:</label>
         <select name="דרך תשלום" id="paymentMethod">
             <option value="cash">מזומן</option>

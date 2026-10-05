@@ -143,9 +143,9 @@
             
             document.getElementById("savePurchase").addEventListener("click", async () => {
                 if (selectedName != null && selectedItemIndex != null) {
-                    databaseHandler.savePurchase(customerNameUUIDMap[selectedName], allItemsNames["UUIDs"][selectedItemIndex], parseInt(amountInput.value), getTotalPrice(parseInt(amountInput.value), selectedItemIndex))
+                    await databaseHandler.savePurchase(customerNameUUIDMap[selectedName], allItemsNames["UUIDs"][selectedItemIndex], parseInt(amountInput.value), getTotalPrice(parseInt(amountInput.value), selectedItemIndex))
                     if (paymentMethodInput.value != "debt") {
-                        databaseHandler.savePayment(customerNameUUIDMap[selectedName], getTotalPrice(parseInt(amountInput.value), selectedItemIndex), paymentMethodInput.value == "cash")
+                        await databaseHandler.savePayment(customerNameUUIDMap[selectedName], getTotalPrice(parseInt(amountInput.value), selectedItemIndex), paymentMethodInput.value == "cash")
                     }
                 }
                 customerNameInput.value = ""

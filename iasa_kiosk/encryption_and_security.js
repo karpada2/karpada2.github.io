@@ -5,6 +5,11 @@ import * as databaseHandler from "./database_handling.js"
 
 
 export const webPageData = {
+    "complete_information.html": {
+        "access": ["admin"],
+        "enabled": true,
+        "displayName": "הצגת נתונים כוללים"
+    },
     "sensitive_changes.html": {
         "access": ["admin"],
         "enabled": true,
