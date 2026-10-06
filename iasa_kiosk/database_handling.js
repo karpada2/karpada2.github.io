@@ -27,6 +27,7 @@ export async function init() {
             }
             else if (sessionStorage.getItem("wantedLocation") != null && location.href.split('/').pop() != sessionStorage.getItem("wantedLocation").split('/').pop()) {
                 location.href = sessionStorage.getItem("wantedLocation")
+                sessionStorage.removeItem("wantedLocation")
             }
         }
     }
