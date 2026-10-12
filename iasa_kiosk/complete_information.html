@@ -20,20 +20,30 @@
 
             console.log(info)
 
-            document.getElementById("revenue").textContent = (info["CLAIMED"]/10).toFixed(2)
+            const unclaimed = info["UNCLAIMED"]/10
+            const bit = info["CLAIMED"]["ביט"]/10
+            const cash = info["CLAIMED"]["מזומן"]/10
+
+            document.getElementById("claimedMoneyTotal").textContent = (bit + cash).toFixed(2)
+            document.getElementById("revenueBit").textContent = bit.toFixed(2)
+            document.getElementById("revenueCash").textContent = cash.toFixed(2)
             document.getElementById("unclaimedDebts").textContent = (info["UNCLAIMED"]/10).toFixed(2)
-            document.getElementById("totalRevenue").textContent = ((info["CLAIMED"] + info["UNCLAIMED"])/10).toFixed(2)
+            document.getElementById("totalRevenue").textContent = (bit + cash + unclaimed).toFixed(2)
         </script>
         <div>
-            <p>סה"כ רווח שנאסף:</p>
-            <p id="revenue"></p>
+            <h1>רווחים שנאספו:</h1>
+            <p id="claimedMoneyTotal"></p>
+            <h2>כסף שנאסף בביט:</h2>
+            <p id="revenueBit"></p>
+            <h2>כסף שנאסף במזומן:</h2>
+            <p id="revenueCash"></p>
         </div>
         <div>
-            <p>סה"כ חובות שלא שולמו:</p>
+            <h1>סה"כ חובות שלא שולמו:</h1>
             <p id="unclaimedDebts"></p>
         </div>
         <div>
-            <p>סה"כ רווח משוער:</p>
+            <h1>סה"כ רווח משוער:</h1>
             <p id="totalRevenue"></p>
         </div>
     </body>

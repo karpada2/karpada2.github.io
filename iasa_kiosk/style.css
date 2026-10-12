@@ -5,6 +5,7 @@ body {
     margin: 0;
     padding: 20px;
     direction: rtl;
+    margin-bottom: 200px; /* Adjust this value based on your footer's height */
 }
 
 body > div, body > label {
@@ -193,4 +194,25 @@ ul#debtsList li {
     padding: 15px;
     font-size: 18px;
     border-radius: 8px;
+}
+
+footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px 0; /* Add some vertical padding */
+}
+
+.horizontalContainer {
+    text-wrap: balance;   /* the key line */
+    text-align: center;   /* or left */
+}
+
+.horizontalContainer button {
+    display: inline-block;
+    margin: 15px;
 }

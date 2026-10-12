@@ -145,7 +145,7 @@
                 if (selectedName != null && selectedItemIndex != null) {
                     await databaseHandler.savePurchase(customerNameUUIDMap[selectedName], allItemsNames["UUIDs"][selectedItemIndex], parseInt(amountInput.value), getTotalPrice(parseInt(amountInput.value), selectedItemIndex))
                     if (paymentMethodInput.value != "debt") {
-                        await databaseHandler.savePayment(customerNameUUIDMap[selectedName], getTotalPrice(parseInt(amountInput.value), selectedItemIndex), paymentMethodInput.value == "cash")
+                        await databaseHandler.savePayment(customerNameUUIDMap[selectedName], getTotalPrice(parseInt(amountInput.value), selectedItemIndex), paymentMethodInput.selectedOptions[0].textContent)
                     }
                 }
                 customerNameInput.value = ""

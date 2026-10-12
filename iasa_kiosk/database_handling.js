@@ -1,6 +1,7 @@
 import * as encryption from "./encryption_and_security.js"
 import * as firestore from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import * as globals from "./global_variables.js"
+import * as common from "./common.js"
 import * as XLSX from "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm";
 import { setInfo } from "./global_variables.js"
 
@@ -29,6 +30,7 @@ export async function init() {
                 location.href = sessionStorage.getItem("wantedLocation")
                 sessionStorage.removeItem("wantedLocation")
             }
+            common.add_navigation_footer(accessLevel)
         }
     }
     else {
@@ -286,7 +288,7 @@ export async function updateCustomers(originalCustomers, newCustomers) {
                 await savePurchase(newCustomer.UUID, "FAKE_ITEM", 1, diff)
             }
             else if (diff < 0) { // means his debt shrank, fake payment should be logged
-                await savePayment(newCustomer.UUID, -diff, false) // maybe false is bad idea, idc right now, this should only happen in the transition period (so only this year)
+                await savePayment(newCustomer.UUID, -diff, "מזומן")
             }
         }
     });
@@ -310,10 +312,10 @@ export async function savePurchase(customerUUID, itemUUID, amount, totalPrice) {
     )
 }
 
-export async function savePayment(customerUUID, paymentSize, isMethodCash) {
+export async function savePayment(customerUUID, paymentSize, method) {
     const paymentRef = firestore.doc(firebaseDatabase, "CUSTOMERS", customerUUID, "PAYMENTS", crypto.randomUUID())
     await firestore.setDoc(paymentRef, {
-        "IS_METHOD_CASH": isMethodCash,
+        "METHOD": method,
         "OPERATING_GRADE": globals.getOperatingGrade(),
         "PAYMENT_SIZE": paymentSize,
         "SELLERS_NAMES": sessionStorage.getItem("sellersNames"),
@@ -322,7 +324,7 @@ export async function savePayment(customerUUID, paymentSize, isMethodCash) {
     await modifyDebt(customerUUID, -paymentSize)
     await firestore.updateDoc(
         firestore.doc(firebaseDatabase, "MONEY_INFO", "INFO"), {
-            ["CLAIMED_REVENUE." + globals.getOperatingGrade()]: firestore.increment(paymentSize),
+            ["CLAIMED_REVENUE." + globals.getOperatingGrade() + "." + method]: firestore.increment(paymentSize),
             ["UNCLAIMED_DEBTS." + globals.getOperatingGrade()]: firestore.increment(-paymentSize)
         }
     )

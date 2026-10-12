@@ -91,7 +91,7 @@
             
             document.getElementById("savePayment").addEventListener("click", async () => {
                 if (selectedName != null) {
-                    await databaseHandler.savePayment(customerNameUUIDMap[selectedName], paymentSizeInput.value*10, document.getElementById("paymentMethod").value == "cash")
+                    await databaseHandler.savePayment(customerNameUUIDMap[selectedName], paymentSizeInput.value*10, document.getElementById("paymentMethod").selectedOptions[0].textContent)
                     customerNameInput.value = ""
                     paymentSizeInput.value = 0
                 }
