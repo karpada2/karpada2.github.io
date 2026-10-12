@@ -161,19 +161,20 @@
                 if (!Object.hasOwn(customer["data"]["CURRENT_DEBT"], String(globals.getOperatingGrade()))) {
                     customer["data"]["CURRENT_DEBT"][String(globals.getOperatingGrade())] = 0
                 }
-                var debtInput = document.createElement('input');
-                debtInput.type = 'number';
-
-                debtInput.id = 'debt-' + (rowAmount - 1);
-                debtInput.placeholder = "הכנס חוב נוכחי..."
-                debtInput.value = customer["data"]["CURRENT_DEBT"][String(globals.getOperatingGrade())]/10;
-                debtInput.step = '0.1';
-
-                debtInput.addEventListener('blur', (event) => {
-                    customer["data"]["CURRENT_DEBT"][globals.getOperatingGrade()] = parseInt(debtInput.value * 10)
-                });
-
-                debtCell.appendChild(debtInput)
+                debtCell.textContent = customer["data"]["CURRENT_DEBT"][String(globals.getOperatingGrade())]/10;
+//                var debtInput = document.createElement('input');
+//                debtInput.type = 'number';
+//
+//                debtInput.id = 'debt-' + (rowAmount - 1);
+//                debtInput.placeholder = "הכנס חוב נוכחי..."
+//                debtInput.value = customer["data"]["CURRENT_DEBT"][String(globals.getOperatingGrade())]/10;
+//                debtInput.step = '0.1';
+//
+//                debtInput.addEventListener('blur', (event) => {
+//                    customer["data"]["CURRENT_DEBT"][globals.getOperatingGrade()] = parseInt(debtInput.value * 10)
+//                });
+//
+//                debtCell.appendChild(debtInput)
 
 
                 var roomCell = newRow.insertCell(3)

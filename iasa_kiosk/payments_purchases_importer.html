@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/jpeg" href="/iasa_kiosk/kiosk_favicon.jpeg">
+</head>
+
+
+<html>
+    <body>
+        <script type="module">
+            import Fuse from "https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.mjs";
+            import * as databaseHandler from "./database_handling.js"
+            import * as globals from "./global_variables.js"
+
+            await databaseHandler.init()
+
+            var allCustomers = await databaseHandler.getCustomersFromGrades(globals.getActiveGrades())
+            var customerNameUUIDMap = allCustomers["names"]
+            const allCustomersNames = Object.keys(customerNameUUIDMap)
+
+            const customerNameUUIDMapTrue = {}
+
+            const customerSearch = new Fuse(
+                allCustomersNames,
+                {
+                    includeMatches: false, 
+                    useTokenSearch: true,
+                    includeScore: false
+                }
+            )
+
+            async function addPurchasesBatch(dataArray) {
+                const purchasesMap = {};
+                var sum = 0
+                for (var i = 1; i < dataArray.length; i++) {
+                    const name = dataArray[i][3];
+                    var uuid = customerNameUUIDMapTrue[name];
+                    if (uuid == null) {
+                        const bestMatch = customerSearch.search(name)[0].item
+                        uuid = customerNameUUIDMap[bestMatch]
+                        customerNameUUIDMapTrue[name] = uuid
+
+                        purchasesMap[uuid] = {
+                            "ביט": 0,
+                            "מזומן": 0,
+                            "חוב": 0
+                        }
+                    }
+
+                    sum += dataArray[i][5]
+                    purchasesMap[uuid][dataArray[i][6]] += dataArray[i][5]*10
+                }
+                console.log(sum)
+                await databaseHandler.importerAddBatchPurchases(purchasesMap)
+            }
+
+
+            const fileInputPurchases = document.getElementById("inputFilePurchases")
+
+            document.getElementById("processPurchases").addEventListener("click", async event => {
+                if (fileInputPurchases.files != null && fileInputPurchases.files[0] != null) {
+                    addPurchasesBatch(await databaseHandler.parseSheet(fileInputPurchases.files[0]))
+                }
+            })
+
+
+            async function addPaymentsBatch(dataArray) {
+                const paymentsMap = {};
+                var sum = 0
+                for (var i = 0; i < dataArray.length; i++) {
+                    const name = dataArray[i][2];
+                    var uuid = customerNameUUIDMapTrue[name];
+                    if (uuid == null) {
+                        const bestMatch = customerSearch.search(name)[0].item
+                        uuid = customerNameUUIDMap[bestMatch]
+                        customerNameUUIDMapTrue[name] = uuid
+
+                        paymentsMap[uuid] = {
+                            "ביט": 0,
+                            "מזומן": 0
+                        }
+                    }
+
+                    sum += dataArray[i][3]
+                    paymentsMap[uuid][dataArray[i][4]] += dataArray[i][3]*10
+                }
+                console.log(sum)
+                await databaseHandler.importerAddBatchPayments(paymentsMap)
+            }
+
+
+            const fileInputPayments = document.getElementById("inputFilePayments")
+
+            document.getElementById("processPayments").addEventListener("click", async event => {
+                if (fileInputPayments.files != null && fileInputPayments.files[0] != null) {
+                    addPaymentsBatch(await databaseHandler.parseSheet(fileInputPayments.files[0]))
+                }
+            })
+        </script>
+        <div>
+            <input type="file" id="inputFilePurchases" accept=".xlsx, .xls" />
+            <button id="processPurchases">הוסף את כל הקניות מהקובץ!</button>
+        </div>
+        <div>
+            <input type="file" id="inputFilePayments" accept=".xlsx, .xls" />
+            <button id="processPayments">הוסף את כל התשלומים מהקובץ!</button>
+        </div>
+    </body>
+</html>

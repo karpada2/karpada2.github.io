@@ -5,6 +5,11 @@ import * as databaseHandler from "./database_handling.js"
 
 
 export const webPageData = {
+    "payments_purchases_importer.html": {
+        "access": ["admin"],
+        "enabled": true,
+        "displayName": "הכנסת קניות וחובות מהאקסל"
+    },
     "complete_information.html": {
         "access": ["admin"],
         "enabled": true,

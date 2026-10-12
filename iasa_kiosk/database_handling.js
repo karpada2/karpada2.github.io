@@ -312,10 +312,10 @@ export async function savePurchase(customerUUID, itemUUID, amount, totalPrice) {
     )
 }
 
-export async function savePayment(customerUUID, paymentSize, method) {
+export async function savePayment(customerUUID, paymentSize, paymentMethod) {
     const paymentRef = firestore.doc(firebaseDatabase, "CUSTOMERS", customerUUID, "PAYMENTS", crypto.randomUUID())
     await firestore.setDoc(paymentRef, {
-        "METHOD": method,
+        "METHOD": paymentMethod,
         "OPERATING_GRADE": globals.getOperatingGrade(),
         "PAYMENT_SIZE": paymentSize,
         "SELLERS_NAMES": sessionStorage.getItem("sellersNames"),
@@ -324,7 +324,7 @@ export async function savePayment(customerUUID, paymentSize, method) {
     await modifyDebt(customerUUID, -paymentSize)
     await firestore.updateDoc(
         firestore.doc(firebaseDatabase, "MONEY_INFO", "INFO"), {
-            ["CLAIMED_REVENUE." + globals.getOperatingGrade() + "." + method]: firestore.increment(paymentSize),
+            ["CLAIMED_REVENUE." + globals.getOperatingGrade() + "." + paymentMethod]: firestore.increment(paymentSize),
             ["UNCLAIMED_DEBTS." + globals.getOperatingGrade()]: firestore.increment(-paymentSize)
         }
     )
@@ -379,4 +379,44 @@ export async function getRevenueInfo() {
         "CLAIMED": snapshot.data()["CLAIMED_REVENUE"][globals.getOperatingGrade()],
         "UNCLAIMED": snapshot.data()["UNCLAIMED_DEBTS"][globals.getOperatingGrade()]
     }
+}
+
+/* purchases is like so:
+customerUuid : {
+    "ביט": amountPurchasedViaBit,
+    "מזומן": amountPurchasedViaCash,
+    "חוב": amountPurchasedViaDebt
+}
+*/
+export async function importerAddBatchPurchases(purchases) {
+    const customerUuids = Object.keys(purchases);
+    await customerUuids.forEach(async customer => {
+        await Object.keys(purchases[customer]).forEach(async paymentMethod => {
+            if (purchases[customer][paymentMethod] != 0) {
+                await firestore.setDoc(firestore.doc(firebaseDatabase, "ITEMS", "FAKE_ITEM"), {"CURRENT_PRICE": purchases[customer][paymentMethod]})
+                await firestore.setDoc(firestore.doc(firebaseDatabase, "ITEMS", "FAKE_ITEM", "PRICE_HISTORY", crypto.randomUUID()), {"PRICE": purchases[customer][paymentMethod], "TIMESTAMP": getCurrentTimestamp()})
+                await savePurchase(customer, "FAKE_ITEM", 1, purchases[customer][paymentMethod])
+                if (paymentMethod != "חוב") {
+                    await savePayment(customer, purchases[customer][paymentMethod], paymentMethod)
+                }
+            }
+        })
+    })
+}
+
+/* payments is like so:
+customerUuid : {
+    "ביט": amountPayedViaBit,
+    "מזומן": amountPayedViaCash,
+}
+*/
+export async function importerAddBatchPayments(payments) {
+    const customerUuids = Object.keys(payments);
+    await customerUuids.forEach(async customer => {
+        await Object.keys(payments[customer]).forEach(async paymentMethod => {
+            if (payments[customer][paymentMethod] != 0) {
+                await savePayment(customer, payments[customer][paymentMethod], paymentMethod)
+            }
+        })
+    })
 }
