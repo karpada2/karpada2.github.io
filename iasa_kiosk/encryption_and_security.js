@@ -40,14 +40,14 @@ export const webPageData = {
         "enabled": true,
         "displayName": "רושם קניות"
     },
-    "debt_payments.html": {
+    "deposit_payment.html": {
         "access": ["admin", "basic"],
         "enabled": true,
-        "displayName": "תשלום חובות"
+        "displayName": "תשלום מראש"
     },
     "debt_checker.html": {
         "access": ["admin", "basic"],
-        "enabled": false,
+        "enabled": true,
         "displayName": "בדיקת חובות"
     },
 }
