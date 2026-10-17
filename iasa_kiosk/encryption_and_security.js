@@ -47,7 +47,7 @@ export const webPageData = {
     },
     "debt_checker.html": {
         "access": ["admin", "basic"],
-        "enabled": true,
+        "enabled": false,
         "displayName": "בדיקת חובות"
     },
 }
