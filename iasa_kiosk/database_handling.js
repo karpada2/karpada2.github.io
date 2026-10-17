@@ -420,3 +420,59 @@ export async function importerAddBatchPayments(payments) {
         })
     })
 }
+
+export async function getItemCosts(wantedUUIDs, alsoHistory = false) {
+    const resultingMap = {}
+    wantedUUIDs.forEach(element => {
+        if (alsoHistory) {
+            resultingMap[element] = {
+                "CURRENT_COST": 0,
+                "COST_HISTORY": []
+            }
+        }
+        else {
+            resultingMap[element] = {
+                "CURRENT_COST": 0
+            }
+        }
+    })
+    const querySnapshot = await firestore.getDocs(
+        firestore.collection(firebaseDatabase, "ITEM_COSTS")
+    );
+
+    await querySnapshot.forEach(async (doc) => {
+        if (wantedUUIDs.includes(doc.id)) {
+            resultingMap[doc.id]["CURRENT_COST"] = doc.data()["CURRENT_COST"]
+            if (alsoHistory) {
+                const priceHistorySnapshot = await firestore.getDocs(
+                    firestore.query(firestore.collection(firebaseDatabase, "ITEM_COSTS", doc.id, "COST_HISTORY"), firestore.orderBy("TIMESTAMP"))
+                );
+        
+                const tempArray = priceHistorySnapshot.docs.map((chDoc) => ({
+                    TIMESTAMP: chDoc.data()["TIMESTAMP"],
+                    COST: chDoc.data()["COST"],
+                }));
+    
+                resultingMap[doc.id]["COST_HISTORY"] = tempArray;
+            }
+        }
+    })
+
+    return resultingMap;
+}
+
+export async function updateItemCosts(originalCosts, newCosts) {
+    await Object.keys(newCosts).forEach(async (itemUUID) => {
+        const itemRef = firestore.doc(firebaseDatabase, "ITEM_COSTS", itemUUID)
+        if (originalCosts[itemUUID] != null) {
+            if (newCosts[itemUUID]["CURRENT_COST"] != originalCosts[itemUUID]["CURRENT_COST"]) {
+                await firestore.updateDoc(itemRef, {"CURRENT_COST": parseFloat(newCosts[itemUUID]["CURRENT_COST"])})
+                await firestore.setDoc(firestore.doc(firebaseDatabase, "ITEM_COSTS", itemUUID, "COST_HISTORY", crypto.randomUUID()), {"TIMESTAMP": getCurrentTimestamp(), "COST": parseFloat(newCosts[itemUUID]["CURRENT_COST"])})
+            }
+        }
+        else {
+            await firestore.setDoc(itemRef, {"CURRENT_COST": parseFloat(newCosts[itemUUID]["CURRENT_COST"])})
+            await firestore.setDoc(firestore.doc(firebaseDatabase, "ITEM_COSTS", itemUUID, "COST_HISTORY", crypto.randomUUID()), {"TIMESTAMP": getCurrentTimestamp(), "COST": parseFloat(newCosts[itemUUID]["CURRENT_COST"])})
+        }
+    });
+}

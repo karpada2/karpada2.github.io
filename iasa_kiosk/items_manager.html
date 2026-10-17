@@ -23,6 +23,19 @@
 
             var originalItems = await databaseHandler.getAllItems()
             var items = JSON.parse(JSON.stringify(originalItems))
+
+            var uuids = []
+            items.forEach((item) => {
+                uuids.push(item["UUID"])
+            })
+
+            var originalCosts = await databaseHandler.getItemCosts(uuids)
+
+            console.log(await databaseHandler.getItemCosts(uuids, true))
+
+            var costs = JSON.parse(JSON.stringify(originalCosts))
+
+
             var displayTable = document.getElementById("itemsTable")
             var indexToWrite = 1
             var rowAmount = 2
@@ -50,8 +63,27 @@
                 });
                 nameCell.appendChild(nameInput)
 
+                
+                var costCell = newRow.insertCell(2)
+                var costInput = document.createElement('input');
 
-                var priceCell = newRow.insertCell(2)
+                costInput.type = 'number';
+
+                costInput.id = 'cost-' + (index+1);
+                costInput.placeholder = "הכנס עלות מוצר..."
+                costInput.value = costs[item["UUID"]]["CURRENT_COST"];
+                costInput.min = '0';
+
+                costInput.addEventListener('blur', (event) => {
+                    costInput.value = parseFloat(costInput.value)
+                    costs[items[index]["UUID"]]["CURRENT_COST"] = costInput.value
+                    console.log(items)
+                });
+
+                costCell.appendChild(costInput)
+
+
+                var priceCell = newRow.insertCell(3)
                 var priceInput = document.createElement('input');
 
                 priceInput.type = 'number';
@@ -70,8 +102,13 @@
 
                 priceCell.appendChild(priceInput)
 
+                
+                var revenueCell = newRow.insertCell(4)
+                revenueCell.id = "revenue-" + (index+1);
+                revenueCell.textContent = ((items[index]["data"]["CURRENT_PRICE"] - costs[items[index]["UUID"]]["CURRENT_COST"]*10)/10).toFixed(4)
 
-                var altNamesCell = newRow.insertCell(3)
+
+                var altNamesCell = newRow.insertCell(5)
                 var altNamesInput = document.createElement("input");
 
                 altNamesInput.type = "text"
@@ -89,7 +126,7 @@
                 altNamesCell.appendChild(altNamesInput)
 
 
-                var isActiveCell = newRow.insertCell(4)
+                var isActiveCell = newRow.insertCell(6)
                 var checkbox = document.createElement("input");
                 checkbox.type = "checkbox";
                 checkbox.id = "is-active-" + (index + 1);
@@ -118,7 +155,9 @@
                         "NAMES": startingValues["NAMES"]
                     }
                 })
-                var item = items[items.length - 1];
+                const item = items[items.length - 1];
+
+                costs[item["UUID"]]["CURRENT_COST"] = startingValues["CURRENT_COST"]
 
                 var idCell = newRow.insertCell(0)
                 idCell.textContent = indexToWrite
@@ -142,7 +181,26 @@
                 nameCell.appendChild(nameInput)
 
 
-                var priceCell = newRow.insertCell(2)
+                var costCell = newRow.insertCell(2)
+                var costInput = document.createElement('input');
+
+                costInput.type = 'number';
+
+                costInput.id = 'cost-' + (index+1);
+                costInput.placeholder = "הכנס עלות מוצר..."
+                costInput.value = costs[item["UUID"]]["CURRENT_COST"];
+                costInput.min = '0';
+
+                costInput.addEventListener('blur', (event) => {
+                    costInput.value = parseFloat(costInput.value)
+                    costs[item["UUID"]]["CURRENT_COST"] = costInput.value
+                    console.log(items)
+                });
+
+                costCell.appendChild(costInput)
+
+
+                var priceCell = newRow.insertCell(3)
                 var priceInput = document.createElement('input');
 
                 priceInput.type = 'number';
@@ -162,7 +220,12 @@
                 priceCell.appendChild(priceInput)
 
 
-                var altNamesCell = newRow.insertCell(3)
+                var revenueCell = newRow.insertCell(4)
+                revenueCell.id = "revenue-" + (rowAmount - 1);
+                revenueCell.textContent = ((items[index]["data"]["CURRENT_PRICE"] - costs[items[index]["UUID"]]["CURRENT_COST"]*10)/10).toFixed(4)
+
+
+                var altNamesCell = newRow.insertCell(5)
                 var altNamesInput = document.createElement("input");
 
                 altNamesInput.type = "text"
@@ -180,7 +243,7 @@
                 altNamesCell.appendChild(altNamesInput)
 
 
-                var isActiveCell = newRow.insertCell(4)
+                var isActiveCell = newRow.insertCell(6)
                 var checkbox = document.createElement("input");
                 checkbox.type = "checkbox";
                 checkbox.id = "is-active-" + (rowAmount - 1);
@@ -195,18 +258,23 @@
                 isActiveCell.appendChild(checkbox);
             }
 
+            function updateRevenue(indexToUpdate) {
+                document.getElementById("revenue-" + indexToUpdate).textContent = ((items[indexToUpdate]["data"]["CURRENT_PRICE"] - costs[items[indexToUpdate]["UUID"]]["CURRENT_COST"]*10)/10).toFixed(4)
+            }
+
 
             function addItemsBatch(dataArray) {
                 console.log(dataArray)
                 for (var i = 0; i < dataArray.length; i++) {
                     var altNames = []
                     if (dataArray[i][2] !== undefined) {
-                        altNames = dataArray[i][2].split(",").map(element => element.trim())
+                        altNames = dataArray[i][3].split(",").map(element => element.trim())
                     }
                     addItem({
                         "ADDED_TIMESTAMP": databaseHandler.getCurrentTimestamp(),
-                        "CURRENT_PRICE": parseInt(dataArray[i][1]*10),
-                        "IS_ACTIVE": dataArray[i][3] !== 0,
+                        "CURRENT_PRICE": parseInt(dataArray[i][2]*10),
+                        "CURRENT_COST": parseFloat(dataArray[i][1]),
+                        "IS_ACTIVE": dataArray[i][4] !== 0,
                         "NAMES": [dataArray[i][0], ...altNames]
                     })
                 }
@@ -216,6 +284,7 @@
                 addItem({
                     "ADDED_TIMESTAMP": databaseHandler.getCurrentTimestamp(),
                     "CURRENT_PRICE": undefined,
+                    "CURRENT_COST": undefined,
                     "IS_ACTIVE": false,
                     "NAMES": [undefined]
                 })
@@ -223,7 +292,9 @@
 
             document.getElementById("sendChangesButton").addEventListener("click", async event => {
                 await databaseHandler.updateItems(originalItems, items)
+                await databaseHandler.updateItemCosts(originalCosts, costs)
                 originalItems = JSON.parse(JSON.stringify(items))
+                originalCosts = JSON.parse(JSON.stringify(costs))
                 console.log("success")
             })
 
@@ -247,7 +318,9 @@
                 <tr>
                     <th>'מס</th>
                     <th>שם</th>
+                    <th>עלות (לקיוסק בשקלים)</th>
                     <th>מחיר (שקלים)</th>
+                    <th>רווח (שקלים)</th>
                     <th>שמות נוספים</th>
                     <th>האם פעיל</th>
                 </tr>
