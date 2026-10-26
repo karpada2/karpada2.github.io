@@ -159,10 +159,18 @@ export async function updateItems(originalItems, newItems) {
 
 
 // returns a map containing the customers as pure data, and also the names as a map to the UUID, for fuzzy search
-export async function getCustomersFromGrades(grades) {
-    var orStatement = firestore.where("GRADE", "==", "N/A")
-    for (var i = 0; i < grades.length; i++) {
-        orStatement = firestore.or(orStatement, firestore.where("GRADE", "==", String(grades[i])))
+export async function getCustomersFromGrades(grades, alsoNoGrades = true) {
+    if (alsoNoGrades) {
+        var orStatement = firestore.where("GRADE", "==", "N/A")
+        for (var i = 0; i < grades.length; i++) {
+            orStatement = firestore.or(orStatement, firestore.where("GRADE", "==", String(grades[i])))
+        }
+    }
+    else {
+        var orStatement = firestore.where("GRADE", "==", String(grades[0]))
+        for (var i = 1; i < grades.length; i++) {
+            orStatement = firestore.or(orStatement, firestore.where("GRADE", "==", String(grades[i])))
+        }
     }
     const querySnapshot = await firestore.getDocs(
         firestore.query(firestore.collection(firebaseDatabase, "CUSTOMERS"), orStatement, firestore.orderBy("GRADE"))
@@ -292,6 +300,7 @@ export async function updateCustomers(originalCustomers, newCustomers) {
             }
         }
     });
+    await updateOperatorsNames(globals.getOperatingGrade(), newCustomers)
 }
 
 export async function savePurchase(customerUUID, itemUUID, amount, totalPrice) {
@@ -369,6 +378,7 @@ export async function getGradesInfo() {
 export async function setGradesInfo(info) {
     const ref = firestore.doc(firebaseDatabase, "OPERATION_INFO", "DATA")
     await firestore.updateDoc(ref, info)
+    await updateOperatorsNames(info["OPERATING_GRADE"], (await getCustomersFromGrades(info["OPERATING_GRADE"], false))["full_data"])
 }
 
 export async function getRevenueInfo() {
@@ -475,4 +485,20 @@ export async function updateItemCosts(originalCosts, newCosts) {
             await firestore.setDoc(firestore.doc(firebaseDatabase, "ITEM_COSTS", itemUUID, "COST_HISTORY", crypto.randomUUID()), {"TIMESTAMP": getCurrentTimestamp(), "COST": parseFloat(newCosts[itemUUID]["CURRENT_COST"])})
         }
     });
+}
+export async function getOperatorsNames(firebaseDatabaseIn = firebaseDatabase) {
+    const snap = await firestore.getDoc(firestore.doc(firebaseDatabaseIn, "OPERATION_INFO", "DATA"))
+
+    return snap.data()["OPERATORS_NAMES"]
+}
+
+export async function updateOperatorsNames(operating_grade, allCustomersFullData) {
+    const operatorsNames = []
+    allCustomersFullData.forEach((element) => {
+        if (element["data"]["GRADE"] == operating_grade) {
+            operatorsNames.push(element["data"]["NAME"])
+        }
+    })
+
+    await firestore.updateDoc(firestore.doc(firebaseDatabase, "OPERATION_INFO", "DATA"), {"OPERATORS_NAMES" : operatorsNames})
 }

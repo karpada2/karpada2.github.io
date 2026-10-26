@@ -70,6 +70,7 @@ export const firebaseConfig = {
 
 };
 
+var firebaseInitialized = false;
 export var firebaseApp
 export var firebaseDatabase
 export var firebaseAuthentication
@@ -149,7 +150,9 @@ export function isPageAccessible(pageInput, accessLevel) {
 }
 
 export async function attemptLogIn(password, names) {
-    await updateFirebaseReferences()
+    if (!firebaseInitialized) {
+        await updateFirebaseReferences()
+    }
     var authenticated = await authenticateWithPassword(password);
     var success = authenticated != "invalid"
     document.getElementById("logInSuccessIndicator").textContent = success ? "Logging In!" : "WRONG PASSWORD"
@@ -174,6 +177,7 @@ export function updateFirebaseReferences() {
         }
     );
     firebaseAuthentication = getAuth(firebaseApp)
+    firebaseInitialized = true
 }
 
 // Function triggered by the user entering a password

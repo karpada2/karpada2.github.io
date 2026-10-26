@@ -11,15 +11,128 @@
     <body>
         <script type="module">
             import * as encryption from "./encryption_and_security.js";
-            import { updateVariables } from "./database_handling.js";
+            import * as globals from "./global_variables.js";
+            import * as databaseHandler from "./database_handling.js";
+            import Fuse from "https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.mjs";
+
+
+            encryption.updateFirebaseReferences()
+            
+            const perfectScoreTolerance = 0.001
+
+            var allOperators = await databaseHandler.getOperatorsNames(encryption.firebaseDatabase)
+            console.log(allOperators)
+
+            const operatorSearch = new Fuse(
+                allOperators,
+                {
+                    includeMatches: false, 
+                    useTokenSearch: true,
+                    includeScore: true
+                }
+            )
+            
+            const nameInput1 = document.getElementById("nameInput1")
+            const operatorList1 = document.getElementById("operatorList1")
+            var selectedName1 = null
+
+            function renderOperatorList1(names) {
+                operatorList1.replaceChildren()
+                for (const name of names) {
+                    const li = document.createElement("li")
+                    li.textContent = name
+                    li.addEventListener("mousedown", (e) => {
+                        e.preventDefault()               // keeps input from blurring first
+                        selectedName1 = name
+                        nameInput1.value = li.textContent
+                        operatorList1.hidden = true
+                    })
+                    operatorList1.appendChild(li)
+                }
+                operatorList1.hidden = names.length === 0
+            }
+            
+            function refreshOperators1() {
+                const q = nameInput1.value.trim()
+                renderOperatorList1(q === "" ? allOperators : operatorSearch.search(q).map(r => r.item))
+            }
+            
+            nameInput1.addEventListener("focus", refreshOperators1)
+            nameInput1.addEventListener("input", () => { selectedName1 = null; refreshOperators1() })
+            nameInput1.addEventListener("blur", () => {
+                operatorList1.hidden = true;
+                if (operatorSearch.search(nameInput1.value.trim())[0].score < perfectScoreTolerance) {
+                    selectedName1 = nameInput1.value.trim()
+                }
+            })
+
+
+
+            const nameInput2 = document.getElementById("nameInput2")
+            const operatorList2 = document.getElementById("operatorList2")
+            var selectedName2 = null
+
+            function renderOperatorList2(names) {
+                operatorList2.replaceChildren()
+                for (const name of names) {
+                    const li = document.createElement("li")
+                    li.textContent = name
+                    li.addEventListener("mousedown", (e) => {
+                        e.preventDefault()               // keeps input from blurring first
+                        selectedName2 = name
+                        nameInput2.value = li.textContent
+                        operatorList2.hidden = true
+                    })
+                    operatorList2.appendChild(li)
+                }
+                operatorList2.hidden = names.length === 0
+            }
+            
+            function refreshOperators2() {
+                const q = nameInput2.value.trim()
+                renderOperatorList2(q === "" ? allOperators : operatorSearch.search(q).map(r => r.item))
+            }
+            
+            nameInput2.addEventListener("focus", refreshOperators2)
+            nameInput2.addEventListener("input", () => { selectedName2 = null; refreshOperators2() })
+            nameInput2.addEventListener("blur", () => {
+                operatorList2.hidden = true;
+                if (operatorSearch.search(nameInput2.value.trim())[0].score < perfectScoreTolerance) {
+                    selectedName2 = nameInput2.value.trim()
+                }
+            })
             
             document.getElementById("logInButton").addEventListener('click', async () => {
-                await encryption.attemptLogIn(document.getElementById("passwordInput").value, document.getElementById("namesInput").value)
+                if (selectedName1 != null && selectedName2 != null) {
+                    if (selectedName1 > selectedName2) {
+                        var temp = selectedName2;
+                        selectedName2 = selectedName1;
+                        selectedName1 = temp;
+                    }
+                    await encryption.attemptLogIn(document.getElementById("passwordInput").value, selectedName1 + ", " + selectedName2)
+                }
+                else {
+                    if (selectedName1 == null) {
+                        nameInput1.value = ""
+                        nameInput1.placeholder = "שם לא תקין! הכנס אחד אחר!"
+                    }
+                    if (selectedName2 == null) {
+                        nameInput2.value = ""
+                        nameInput2.placeholder = "שם לא תקין! הכנס אחד אחר!"
+                    }
+                }
             });
-
-            console.log(sessionStorage.getItem("wantedLocation"))
         </script>
-        <input type="text" id="namesInput" placeholder="Your Names"><br>
+        <div class="autocomplete">
+            <label for="nameInput1">שם של אדם 1 במשמרת:</label>
+            <input type="text" id="nameInput1" autocomplete="off">
+            <ul id="operatorList1" class="autoCompleteList" hidden></ul>
+        </div>
+        <div class="autocomplete">
+            <label for="nameInput2">שם של אדם 2 במשמרת:</label>
+            <input type="text" id="nameInput2" autocomplete="off">
+            <ul id="operatorList2" class="autoCompleteList" hidden></ul>
+        </div>
         <input type="text" id="passwordInput" placeholder="Password"><br>
         <button id="logInButton">Log In</button>
         <p id="logInSuccessIndicator"></p>
