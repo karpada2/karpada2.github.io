@@ -109,7 +109,7 @@
                         selectedName2 = selectedName1;
                         selectedName1 = temp;
                     }
-                    await encryption.attemptLogIn(document.getElementById("passwordInput").value, selectedName1 + ", " + selectedName2)
+                    await encryption.attemptLogIn(document.getElementById("passwordInput").value, [selectedName1, selectedName2])
                 }
                 else {
                     if (selectedName1 == null) {

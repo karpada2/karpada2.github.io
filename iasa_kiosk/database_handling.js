@@ -8,14 +8,17 @@ import { setInfo } from "./global_variables.js"
 export var firebaseDatabase
 export var firebaseAuthentication
 export var accessLevel 
+export var sellersNames
 
 export function updateVariables(accessLevel, sellers) {
     sessionStorage.setItem("accessLevel", accessLevel)
-    sessionStorage.setItem("sellersNames", sellers)
+    sessionStorage.setItem("sellerName1", sellers[0])
+    sessionStorage.setItem("sellerName2", sellers[1])
 }
 
 export async function init() {
     const tempAccess = sessionStorage.getItem("accessLevel")
+    sellersNames = [sessionStorage.getItem("sellerName1"), sessionStorage.getItem("sellerName2")]
     if (tempAccess != null) {
         await encryption.updateFirebaseReferences()
         firebaseDatabase = encryption.firebaseDatabase
@@ -310,7 +313,7 @@ export async function savePurchase(customerUUID, itemUUID, amount, totalPrice) {
         "ITEM": firestore.doc(firebaseDatabase, "ITEMS", itemUUID),
         "OPERATING_GRADE": globals.getOperatingGrade(),
         "PRICE": totalPrice,
-        "SELLERS_NAMES": sessionStorage.getItem("sellersNames"),
+        "SELLERS_NAMES": sellersNames,
         "TIMESTAMP": getCurrentTimestamp()
     })
     await modifyDebt(customerUUID, totalPrice)
@@ -327,7 +330,7 @@ export async function savePayment(customerUUID, paymentSize, paymentMethod) {
         "METHOD": paymentMethod,
         "OPERATING_GRADE": globals.getOperatingGrade(),
         "PAYMENT_SIZE": paymentSize,
-        "SELLERS_NAMES": sessionStorage.getItem("sellersNames"),
+        "SELLERS_NAMES": sellersNames,
         "TIMESTAMP": getCurrentTimestamp()
     })
     await modifyDebt(customerUUID, -paymentSize)
