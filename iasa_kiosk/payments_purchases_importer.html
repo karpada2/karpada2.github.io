@@ -36,7 +36,7 @@
                 var sum = 0
                 for (var i = 1; i < dataArray.length; i++) {
                     const name = dataArray[i][3];
-                    if (name != null && name.length >= 1) {
+                    if (name && name.trim().length >= 1) {
                         var uuid = customerNameUUIDMapTrue[name];
                         if (uuid == null) {
                             const bestMatch = customerSearch.search(name)[0].item
@@ -73,7 +73,7 @@
                 var sum = 0
                 for (var i = 0; i < dataArray.length; i++) {
                     const name = dataArray[i][2];
-                    if (name != null && name.length >= 1) {
+                    if (name && name.trim().length >= 1) {
                         var uuid = customerNameUUIDMapTrue[name];
                         if (uuid == null) {
                             const bestMatch = customerSearch.search(name)[0].item

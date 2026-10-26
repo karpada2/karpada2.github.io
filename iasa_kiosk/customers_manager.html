@@ -23,6 +23,7 @@
             await databaseHandler.init()
 
             var originalCustomers = (await databaseHandler.getCustomersFromGrades(globals.getActiveGrades()))["full_data"]
+            console.log(originalCustomers)
             var customers = JSON.parse(JSON.stringify(originalCustomers))
             var displayTable = document.getElementById("customersTable")
             var indexToWrite = 1
@@ -253,14 +254,16 @@
 
             function addCustomersBatch(dataArray) {
                 for (var i = 0; i < dataArray.length; i++) {
-                    addCustomer({
-                        "GRADE": dataArray[i][3],
-                        "PHONE_NUMBER": dataArray[i][1],
-                        "NAME": dataArray[i][0],
-                        "ROOM_NUMBER": dataArray[i][4],
-                        "CUSTOMER_TYPE": dataArray[i][2],
-                        "CURRENT_DEBT": {[globals.getOperatingGrade()]: parseInt(dataArray[i][5]*10)}
-                    })
+                    if (dataArray[i][0]) {
+                        addCustomer({
+                            "GRADE": String(dataArray[i][3]),
+                            "PHONE_NUMBER": String(dataArray[i][1] ?? "0000000000"),
+                            "NAME": String(dataArray[i][0]),
+                            "ROOM_NUMBER": String(dataArray[i][4]),
+                            "CUSTOMER_TYPE": String(dataArray[i][2]),
+                            "CURRENT_DEBT": {[globals.getOperatingGrade()]: parseInt(dataArray[i][5] || 0)*10}
+                        })
+                    }
                 }
             }
 

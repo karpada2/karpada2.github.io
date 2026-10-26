@@ -238,6 +238,7 @@ export async function getCustomersInRoom(roomNumber, grades, forceCache = true) 
 }
 
 export async function updateCustomers(originalCustomers, newCustomers) {
+    console.log(newCustomers)
     await newCustomers.forEach(async (newCustomer, index) => {
         const customerRef = firestore.doc(firebaseDatabase, "CUSTOMERS", newCustomer.UUID)
         if (index < originalCustomers.length) {
