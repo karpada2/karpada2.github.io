@@ -94,7 +94,12 @@
 
                     button.textContent = "נקה חוב!"
                     button.addEventListener("click", (e) => {
-                        databaseHandler.savePayment(customerNameUUIDMap[name], debt, document.getElementById("personalPaymentMethod").selectedOptions[0].textContent)
+                        if (baseCustomers[customerNameUUIDMap[name]]["CURRENT_DEBT"][globals.getOperatingGrade()] > 0) {
+                            databaseHandler.savePayment(customerNameUUIDMap[name], baseCustomers[customerNameUUIDMap[name]]["CURRENT_DEBT"][globals.getOperatingGrade()], document.getElementById("personalPaymentMethod").selectedOptions[0].textContent)
+                            baseCustomers[customerNameUUIDMap[name]]["CURRENT_DEBT"][globals.getOperatingGrade()] = 0
+                            debtCell.textContent = String(baseCustomers[customerNameUUIDMap[name]]["CURRENT_DEBT"][globals.getOperatingGrade()]/10)
+                            console.log(baseCustomers[customerNameUUIDMap[name]]["CURRENT_DEBT"][globals.getOperatingGrade()])
+                        }
                     })
 
                     buttonCell.appendChild(button)
