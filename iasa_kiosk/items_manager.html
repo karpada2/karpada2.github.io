@@ -144,6 +144,7 @@
             function addItem(startingValues) {
                 var newRow = displayTable.insertRow(rowAmount - 1)
                 var newItemIndex = rowAmount - 2
+                const index = newItemIndex
                 rowAmount++
 
                 items.push({
@@ -157,7 +158,15 @@
                 })
                 const item = items[items.length - 1];
 
-                costs[item["UUID"]]["CURRENT_COST"] = startingValues["CURRENT_COST"]
+                costs[item["UUID"]] = {
+                    "CURRENT_COST": startingValues["CURRENT_COST"] ?? 0,
+                    "COST_HISTORY": [
+                        {
+                            "TIMESTAMP": startingValues["ADDED_TIMESTAMP"],
+                            "COST": startingValues["CURRENT_COST"] ?? 0
+                        }
+                    ]
+                }
 
                 var idCell = newRow.insertCell(0)
                 idCell.textContent = indexToWrite
