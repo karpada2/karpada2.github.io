@@ -1,7 +1,16 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getAuth, updatePassword, reauthenticateWithCredential, EmailAuthProvider, signInWithEmailAndPassword, connectAuthEmulator } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, memoryLocalCache, connectFirestoreEmulator } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import * as databaseHandler from "./database_handling.js"
+
+var isTesting = null
+
+function checkIsTesting() {
+    if (isTesting == null) {
+        isTesting = location.href.includes("localhost") || location.href.includes("127.0.0.1")
+    }
+    return isTesting
+}
 
 
 export const webPageData = {
@@ -53,7 +62,24 @@ export const webPageData = {
 }
 
 
-export const firebaseConfig = {
+const testConfig = {
+  apiKey: "AIzaSyAOYTLTifhVe12mEWbo6-lld8fx7-gdrSA",
+
+  authDomain: "iasa-kiosk-test.firebaseapp.com",
+
+  databaseURL: "https://iasa-kiosk-test-default-rtdb.europe-west1.firebasedatabase.app",
+
+  projectId: "iasa-kiosk-test",
+
+  storageBucket: "iasa-kiosk-test.firebasestorage.app",
+
+  messagingSenderId: "840067312490",
+
+  appId: "1:840067312490:web:54a97f7bbb394504795313"
+};
+
+
+const firebaseConfig = {
   apiKey: "AIzaSyBfC4brPJTAZzndxPmgt4PMRns2emjR71Y",
 
   authDomain: "iasa-kiosk-temp.firebaseapp.com",
@@ -169,7 +195,20 @@ export async function attemptLogIn(password, names) {
 }
 
 export function updateFirebaseReferences() {
-    firebaseApp = initializeApp(firebaseConfig)
+    var displayString = "using real database: " + !checkIsTesting()
+    if (checkIsTesting) {
+        displayString += "\nbasic: basic_pass\nadmin: admin_pass"
+    }
+    alert(displayString)
+    
+
+    if (!checkIsTesting()) {
+        firebaseApp = initializeApp(firebaseConfig)
+    }
+    else {
+        firebaseApp = initializeApp(testConfig)
+    }
+
     firebaseDatabase = initializeFirestore(
         firebaseApp, 
         {
@@ -201,21 +240,25 @@ export async function authenticateWithPassword(passwordInput) {
 }
 
 export async function setBasicPassword(newPassword) {
-  const token = await firebaseAuthentication.currentUser.getIdToken();
-  const res = await fetch("https://pw-worker.iasa-kiosk-password-manager.workers.dev", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ newPassword }),
-  });
-  if (!res.ok) throw new Error((await res.json()).error);
+    if (!checkIsTesting()) {
+        const token = await firebaseAuthentication.currentUser.getIdToken();
+        const res = await fetch("https://pw-worker.iasa-kiosk-password-manager.workers.dev", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ newPassword }),
+        });
+        if (!res.ok) throw new Error((await res.json()).error);
+    }
 }
 
 export async function setAdminPassword(currentPassword, newPassword) {
-    const user = getAuth().currentUser;
-    const cred = EmailAuthProvider.credential(user.email, currentPassword);
-    await reauthenticateWithCredential(user, cred); // avoids auth/requires-recent-login
-    await updatePassword(user, newPassword);
+    if (!checkIsTesting()) {
+        const user = getAuth().currentUser;
+        const cred = EmailAuthProvider.credential(user.email, currentPassword);
+        await reauthenticateWithCredential(user, cred); // avoids auth/requires-recent-login
+        await updatePassword(user, newPassword);
+    }
 }
