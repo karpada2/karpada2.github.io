@@ -50,8 +50,8 @@
                             }
                         }
     
-                        sum += dataArray[i][5]
-                        purchasesMap[uuid][dataArray[i][6]] += dataArray[i][5]*10
+                        sum += dataArray[i][5] ?? 0
+                        purchasesMap[uuid][dataArray[i][6] ?? "מזומן"] += (dataArray[i][5] ?? 0)*10
                     }
                 }
                 console.log(sum)
@@ -86,8 +86,8 @@
                             }
                         }
     
-                        sum += dataArray[i][3]
-                        paymentsMap[uuid][dataArray[i][4]] += dataArray[i][3]*10
+                        sum += dataArray[i][3] ?? 0
+                        paymentsMap[uuid][dataArray[i][4]] += (dataArray[i][3] ?? 0)*10
                     }
                 }
                 console.log(sum)
