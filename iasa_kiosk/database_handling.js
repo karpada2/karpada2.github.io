@@ -327,7 +327,7 @@ export async function savePurchase(customerUUID, itemUUID, amount, totalPrice) {
 }
 
 export async function savePayment(customerUUID, paymentSize, paymentMethod) {
-    const paymentRef = firestore.doc(firebaseDatabase, "CUSTOMERS", crypto.randomUUID())
+    const paymentRef = firestore.doc(firebaseDatabase, "PAYMENTS", crypto.randomUUID())
     await firestore.setDoc(paymentRef, {
         "CUSTOMER": customerUUID,
         "METHOD": paymentMethod,
