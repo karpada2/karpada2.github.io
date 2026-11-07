@@ -50,8 +50,10 @@
                             }
                         }
     
-                        sum += dataArray[i][5] ?? 0
-                        purchasesMap[uuid][dataArray[i][6] ?? "מזומן"] += (dataArray[i][5] ?? 0)*10
+                        if (Math.round((dataArray[i][5] ?? 0)*10)) {
+                            sum += dataArray[i][5] ?? 0
+                            purchasesMap[uuid][dataArray[i][6] ?? "מזומן"] += Math.round((dataArray[i][5] ?? 0)*10)
+                        }
                     }
                 }
                 console.log(sum)
@@ -85,9 +87,11 @@
                                 "מזומן": 0
                             }
                         }
-    
-                        sum += dataArray[i][3] ?? 0
-                        paymentsMap[uuid][dataArray[i][4]] += (dataArray[i][3] ?? 0)*10
+                        
+                        if (Math.round((dataArray[i][3] ?? 0)*10)) {
+                            sum += dataArray[i][3] ?? 0
+                            paymentsMap[uuid][dataArray[i][4]] += Math.round((dataArray[i][3] ?? 0)*10)
+                        }
                     }
                 }
                 console.log(sum)
