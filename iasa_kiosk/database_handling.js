@@ -308,8 +308,9 @@ export async function updateCustomers(originalCustomers, newCustomers) {
 }
 
 export async function savePurchase(customerUUID, itemUUID, amount, totalPrice) {
-    const purchaseRef = firestore.doc(firebaseDatabase, "CUSTOMERS", customerUUID, "PURCHASES", crypto.randomUUID())
+    const purchaseRef = firestore.doc(firebaseDatabase, "PURCHASES", crypto.randomUUID())
     await firestore.setDoc(purchaseRef, {
+        "CUSTOMER": customerUUID,
         "AMOUNT": parseInt(amount),
         "ITEM": firestore.doc(firebaseDatabase, "ITEMS", itemUUID),
         "OPERATING_GRADE": globals.getOperatingGrade(),
@@ -326,8 +327,9 @@ export async function savePurchase(customerUUID, itemUUID, amount, totalPrice) {
 }
 
 export async function savePayment(customerUUID, paymentSize, paymentMethod) {
-    const paymentRef = firestore.doc(firebaseDatabase, "CUSTOMERS", customerUUID, "PAYMENTS", crypto.randomUUID())
+    const paymentRef = firestore.doc(firebaseDatabase, "CUSTOMERS", crypto.randomUUID())
     await firestore.setDoc(paymentRef, {
+        "CUSTOMER": customerUUID,
         "METHOD": paymentMethod,
         "OPERATING_GRADE": globals.getOperatingGrade(),
         "PAYMENT_SIZE": paymentSize,
