@@ -95,10 +95,14 @@
                     button.textContent = "נקה חוב!"
                     button.addEventListener("click", (e) => {
                         if (baseCustomers[customerNameUUIDMap[name]]["CURRENT_DEBT"][globals.getOperatingGrade()] > 0) {
-                            databaseHandler.savePayment(customerNameUUIDMap[name], baseCustomers[customerNameUUIDMap[name]]["CURRENT_DEBT"][globals.getOperatingGrade()], document.getElementById("personalPaymentMethod").selectedOptions[0].textContent)
-                            baseCustomers[customerNameUUIDMap[name]]["CURRENT_DEBT"][globals.getOperatingGrade()] = 0
-                            debtCell.textContent = String(baseCustomers[customerNameUUIDMap[name]]["CURRENT_DEBT"][globals.getOperatingGrade()]/10)
-                            console.log(baseCustomers[customerNameUUIDMap[name]]["CURRENT_DEBT"][globals.getOperatingGrade()])
+                            var debt_to_clear;
+                            var promptInput = prompt("Input amount of money to clear:", baseCustomers[customerNameUUIDMap[name]]["CURRENT_DEBT"][globals.getOperatingGrade()]/10)
+                            if (promptInput) {
+                                debt_to_clear = Math.round(parseFloat(promptInput) * 10)
+                                databaseHandler.savePayment(customerNameUUIDMap[name], debt_to_clear, document.getElementById("personalPaymentMethod").selectedOptions[0].textContent)
+                                baseCustomers[customerNameUUIDMap[name]]["CURRENT_DEBT"][globals.getOperatingGrade()] -= debt_to_clear
+                                debtCell.textContent = String(baseCustomers[customerNameUUIDMap[name]]["CURRENT_DEBT"][globals.getOperatingGrade()]/10)
+                            }
                         }
                     })
 
