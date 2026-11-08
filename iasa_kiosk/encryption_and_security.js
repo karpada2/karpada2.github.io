@@ -195,11 +195,13 @@ export async function attemptLogIn(password, names) {
 }
 
 export function updateFirebaseReferences() {
-    var displayString = "using real database: " + !checkIsTesting()
-    if (checkIsTesting) {
-        displayString += "\nbasic: basic_pass\nadmin: admin_pass"
+    if (location.href.includes("login.html")) {
+        var displayString = "using real database: " + !checkIsTesting()
+        if (checkIsTesting()) {
+            displayString += "\nbasic: basic_pass\nadmin: admin_pass"
+        }
+        alert(displayString)
     }
-    alert(displayString)
     
 
     if (!checkIsTesting()) {
