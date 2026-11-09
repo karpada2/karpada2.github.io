@@ -216,3 +216,11 @@ footer {
     display: inline-block;
     margin: 15px;
 }
+
+#modules {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 1rem;
+}
