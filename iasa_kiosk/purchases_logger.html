@@ -50,6 +50,8 @@
         const modulesContainer = document.getElementById("modules")
         const moduleTemplate = document.getElementById("purchaseModuleTemplate")
 
+        let lastFocusedModule = null
+
         function createPurchaseModule() {
             const root = moduleTemplate.content.firstElementChild.cloneNode(true)
 
@@ -128,20 +130,24 @@
                 renderCustomerList(q === "" ? allCustomersNames : customerSearch.search(q).map(r => r.item))
             }
 
-            customerNameInput.addEventListener("focus", refreshCustomers)
-            customerNameInput.addEventListener("input", () => { selectedName = null; refreshCustomers() })
-            customerNameInput.addEventListener("blur", () => {
-                customerList.hidden = true
+            function resolveTypedCustomer() {
                 const typed = customerNameInput.value.trim()
                 const best = customerSearch.search(typed)[0]
                 if (best && best.score < perfectScoreTolerance) {
                     selectedName = typed
                 }
+            }
+
+            customerNameInput.addEventListener("focus", refreshCustomers)
+            customerNameInput.addEventListener("input", () => { selectedName = null; refreshCustomers() })
+            customerNameInput.addEventListener("blur", () => {
+                customerList.hidden = true
+                resolveTypedCustomer()
             })
 
             amountInput.addEventListener("input", updatePriceShowcase)
 
-            root.querySelector(".savePurchase").addEventListener("click", async () => {
+            const savePurchase = async () => {
                 if (selectedName != null && selectedItemIndex != null) {
                     await databaseHandler.savePurchase(customerNameUUIDMap[selectedName], allItemsNames["UUIDs"][selectedItemIndex], parseInt(amountInput.value), getTotalPrice(parseInt(amountInput.value), selectedItemIndex))
                     if (paymentMethodInput.value != "debt") {
@@ -153,7 +159,30 @@
                 amountInput.value = "1"
                 paymentMethodInput.value = "debt"
                 updatePriceShowcase()
-            })
+            }
+
+            let saving = false
+
+            async function guardedSave() {
+                if (saving) return
+                saving = true
+                try {
+                    await savePurchase()
+                } finally {
+                    saving = false
+                }
+            }
+
+            root.querySelector(".savePurchase").addEventListener("click", guardedSave)
+
+            function confirmOnEnter() {
+                resolveTypedCustomer()
+                if (selectedName != null && selectedItemIndex != null && parseInt(amountInput.value) >= 1) {
+                    guardedSave()
+                }
+            }
+
+            root.addEventListener("focusin", () => { lastFocusedModule = confirmOnEnter })
             
             modulesContainer.appendChild(root)
         }
@@ -161,6 +190,14 @@
         for (let n = 0; n < 3; n++) {
             createPurchaseModule()
         }
+
+        document.addEventListener("keydown", (e) => {
+            if (e.key !== "Enter" || e.repeat || e.isComposing) return
+            if (e.target.closest("button")) return
+            if (lastFocusedModule == null) return
+            e.preventDefault()
+            lastFocusedModule()
+        })
     </script>
     <div id="modules"></div>
 
