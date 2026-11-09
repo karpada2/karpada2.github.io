@@ -307,7 +307,7 @@ export async function updateCustomers(originalCustomers, newCustomers) {
     await updateOperatorsNames(globals.getOperatingGrade(), newCustomers)
 }
 
-export async function savePurchase(customerUUID, itemUUID, amount, totalPrice) {
+export async function savePurchase(customerUUID, itemUUID, amount, totalPrice, tipAmount = 0) {
     const purchaseRef = firestore.doc(firebaseDatabase, "PURCHASES", crypto.randomUUID())
     await firestore.setDoc(purchaseRef, {
         "CUSTOMER": customerUUID,
@@ -316,12 +316,13 @@ export async function savePurchase(customerUUID, itemUUID, amount, totalPrice) {
         "OPERATING_GRADE": globals.getOperatingGrade(),
         "PRICE": totalPrice,
         "SELLERS_NAMES": sellersNames,
-        "TIMESTAMP": getCurrentTimestamp()
+        "TIMESTAMP": getCurrentTimestamp(),
+        "TIP_AMOUNT": tipAmount
     })
-    await modifyDebt(customerUUID, totalPrice)
+    await modifyDebt(customerUUID, totalPrice + tipAmount)
     await firestore.updateDoc(
         firestore.doc(firebaseDatabase, "MONEY_INFO", "INFO"), {
-            ["UNCLAIMED_DEBTS." + globals.getOperatingGrade()]: firestore.increment(totalPrice)
+            ["UNCLAIMED_DEBTS." + globals.getOperatingGrade()]: firestore.increment(totalPrice + tipAmount)
         }
     )
 }

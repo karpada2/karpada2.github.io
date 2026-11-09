@@ -44,6 +44,11 @@ export const webPageData = {
         "enabled": false,
         "displayName": "מסך בית"
     },
+    "purchase_history_editor.html": {
+        "access": ["admin", "basic"],
+        "enabled": true,
+        "displayName": "עריכת היסטוריה"
+    },
     "purchases_logger.html": {
         "access": ["admin", "basic"],
         "enabled": true,

@@ -1,77 +1,85 @@
 <!DOCTYPE html>
-
-<head>
+<html>
+    <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/jpeg" href="/iasa_kiosk/kiosk_favicon.jpeg">
 </head>
 
+<body>
 
-<html>
-    <body>
-        <script type="module">
-            import Fuse from "https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.mjs";
-            import * as databaseHandler from "./database_handling.js"
-            import * as globals from "./global_variables.js"
+    <script type="module">
+        import Fuse from "https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.mjs";
+        import * as databaseHandler from "./database_handling.js"
+        import * as globals from "./global_variables.js"
 
-            await databaseHandler.init()
+        await databaseHandler.init()
 
-            const perfectScoreTolerance = 0.001
+        const perfectScoreTolerance = 0.001
 
-            var allItemsNames = await databaseHandler.getItemsDataForPurchases()
-            var allItemsPrimaryNames = allItemsNames["names"].map(names => (names[0]))
-            var allCustomers = await databaseHandler.getCustomersFromGrades(globals.getActiveGrades())
-            var customerNameUUIDMap = allCustomers["names"]
-            const allItemsIndexes = [...Array(allItemsNames["names"].length).keys()];
-            const allCustomersNames = Object.keys(customerNameUUIDMap)
+        var allItemsNames = await databaseHandler.getItemsDataForPurchases()
+        var allItemsPrimaryNames = allItemsNames["names"].map(names => (names[0]))
+        var allCustomers = await databaseHandler.getCustomersFromGrades(globals.getActiveGrades())
+        var customerNameUUIDMap = allCustomers["names"]
+        const allItemsIndexes = [...Array(allItemsNames["names"].length).keys()];
+        const allCustomersNames = Object.keys(customerNameUUIDMap)
 
-            const itemSearch = new Fuse(
-                allItemsNames["names"].map(names => ({ names })),
-                {
-                    keys: ["names"], 
-                    includeMatches: false, 
-                    useTokenSearch: true,
-                    includeScore: false
-                }
-            )
-
-            const customerSearch = new Fuse(
-                allCustomersNames,
-                {
-                    includeMatches: false, 
-                    useTokenSearch: true,
-                    includeScore: true
-                }
-            )
-
-            const amountInput = document.getElementById("amountInput")
-            const priceShowcase = document.getElementById("priceShowcase")
-            
-            
-            const itemNameInput = document.getElementById("itemNameInput")
-            const itemList = document.getElementById("itemList")
-            let selectedItemIndex = null
-            
-            function getTotalPrice(amount, itemIndex) {
-                return amountInput.value * allItemsNames["prices"][selectedItemIndex]
+        const itemSearch = new Fuse(
+            allItemsNames["names"].map(names => ({ names })),
+            {
+                keys: ["names"],
+                includeMatches: false,
+                useTokenSearch: true,
+                includeScore: false
             }
-            
+        )
+
+        const customerSearch = new Fuse(
+            allCustomersNames,
+            {
+                includeMatches: false,
+                useTokenSearch: true,
+                includeScore: true
+            }
+        )
+
+        function getTotalPrice(amount, itemIndex) {
+            return amount * allItemsNames["prices"][itemIndex]
+        }
+
+        const modulesContainer = document.getElementById("modules")
+        const moduleTemplate = document.getElementById("purchaseModuleTemplate")
+
+        function createPurchaseModule() {
+            const root = moduleTemplate.content.firstElementChild.cloneNode(true)
+
+            const amountInput = root.querySelector(".amountInput")
+            const priceShowcase = root.querySelector(".priceShowcase")
+            const itemNameInput = root.querySelector(".itemNameInput")
+            const itemList = root.querySelector(".itemList")
+            const customerNameInput = root.querySelector(".customerNameInput")
+            const customerList = root.querySelector(".customerList")
+            const paymentMethodInput = root.querySelector(".paymentMethod")
+
+            let selectedItemIndex = null
+            let selectedName = null
+
             function updatePriceShowcase() {
                 if (selectedItemIndex != null) {
-                    priceShowcase.textContent = String(getTotalPrice(amountInput.value, selectedItemIndex)/10)
+                    priceShowcase.textContent = String(getTotalPrice(amountInput.value, selectedItemIndex) / 10)
                 }
                 else {
                     priceShowcase.textContent = "לא נבחר מוצר"
                 }
             }
-            
+
             function renderItemList(indexes) {
                 itemList.replaceChildren()
                 for (const i of indexes) {
                     const li = document.createElement("li")
                     li.textContent = allItemsNames["names"][i][0]
                     li.addEventListener("mousedown", (e) => {
-                        e.preventDefault()               // keeps input from blurring first
+                        e.preventDefault()
                         selectedItemIndex = i
                         itemNameInput.value = li.textContent
                         itemList.hidden = true
@@ -81,38 +89,31 @@
                 }
                 itemList.hidden = indexes.length === 0
             }
-            
+
             function refreshItems() {
                 const q = itemNameInput.value.trim()
                 renderItemList(q === "" ? allItemsIndexes : itemSearch.search(q).map(r => r.refIndex))
             }
-            
+
             itemNameInput.addEventListener("focus", refreshItems)
             itemNameInput.addEventListener("input", () => {
-                selectedItemIndex = null;
-                refreshItems();
-                if (selectedItemIndex == null && allItemsPrimaryNames.includes(itemNameInput.value.trim())) {
-                    selectedItemIndex = allItemsPrimaryNames.indexOf(itemNameInput.value.trim())
-                }
-                if (selectedItemIndex == -1) {
-                    selectedItemIndex = null
+                selectedItemIndex = null
+                refreshItems()
+                const exactIndex = allItemsPrimaryNames.indexOf(itemNameInput.value.trim())
+                if (exactIndex !== -1) {
+                    selectedItemIndex = exactIndex
                 }
                 updatePriceShowcase()
             })
             itemNameInput.addEventListener("blur", () => { itemList.hidden = true })
-            
-            
-            const customerNameInput = document.getElementById("customerNameInput")
-            const customerList = document.getElementById("customerList")
-            var selectedName = null
-            
+
             function renderCustomerList(names) {
                 customerList.replaceChildren()
                 for (const name of names) {
                     const li = document.createElement("li")
                     li.textContent = name
                     li.addEventListener("mousedown", (e) => {
-                        e.preventDefault()               // keeps input from blurring first
+                        e.preventDefault()
                         selectedName = name
                         customerNameInput.value = li.textContent
                         customerList.hidden = true
@@ -121,63 +122,76 @@
                 }
                 customerList.hidden = names.length === 0
             }
-            
+
             function refreshCustomers() {
                 const q = customerNameInput.value.trim()
                 renderCustomerList(q === "" ? allCustomersNames : customerSearch.search(q).map(r => r.item))
             }
-            
+
             customerNameInput.addEventListener("focus", refreshCustomers)
             customerNameInput.addEventListener("input", () => { selectedName = null; refreshCustomers() })
             customerNameInput.addEventListener("blur", () => {
-                customerList.hidden = true;
-                if (customerSearch.search(customerNameInput.value.trim())[0].score < perfectScoreTolerance) {
-                    selectedName = customerNameInput.value.trim()
+                customerList.hidden = true
+                const typed = customerNameInput.value.trim()
+                const best = customerSearch.search(typed)[0]
+                if (best && best.score < perfectScoreTolerance) {
+                    selectedName = typed
                 }
             })
-            
-            
-            const paymentMethodInput = document.getElementById("paymentMethod")
-            
+
             amountInput.addEventListener("input", updatePriceShowcase)
-            
-            document.getElementById("savePurchase").addEventListener("click", async () => {
+
+            root.querySelector(".savePurchase").addEventListener("click", async () => {
                 if (selectedName != null && selectedItemIndex != null) {
                     await databaseHandler.savePurchase(customerNameUUIDMap[selectedName], allItemsNames["UUIDs"][selectedItemIndex], parseInt(amountInput.value), getTotalPrice(parseInt(amountInput.value), selectedItemIndex))
                     if (paymentMethodInput.value != "debt") {
                         await databaseHandler.savePayment(customerNameUUIDMap[selectedName], getTotalPrice(parseInt(amountInput.value), selectedItemIndex), paymentMethodInput.selectedOptions[0].textContent)
                     }
                 }
-                customerNameInput.value = ""
-                selectedName = null
                 itemNameInput.value = ""
                 selectedItemIndex = null
                 amountInput.value = "1"
                 paymentMethodInput.value = "debt"
                 updatePriceShowcase()
             })
-        </script>
+            
+            modulesContainer.appendChild(root)
+        }
 
-        <button id="savePurchase">תקנה!</button><br>
-        <div class="autocomplete">
-            <label for="itemNameInput">הכנס שם מוצר:</label>
-            <input type="text" id="itemNameInput" autocomplete="off">
-            <ul id="itemList" class="autoCompleteList" hidden></ul>
-        </div><br>
-        <div class="autocomplete">
-            <label for="customerNameInput">הכנס שם לקוח:</label>
-            <input type="text" id="customerNameInput" autocomplete="off">
-            <ul id="customerList" class="autoCompleteList" hidden></ul>
-        </div><br>
-        <label for="amountInput">הכנס כמות מוצר שנקנית:</label>
-        <input id="amountInput" type="number" min="1" step="1" value="1"><br>
-        <label for="priceShowcase">מחיר סה"כ:</label>
-        <p id="priceShowcase">לא נבחר מוצר</p><br>
-        <label for="paymentMethod">בחר דרך תשלום:</label>
-        <select id="paymentMethod">
-            <option value="debt">חוב</option>
-            <option value="cash">מזומן</option>
-            <option value="bit">ביט</option>
-        </select>
-    </body>
+        for (let n = 0; n < 3; n++) {
+            createPurchaseModule()
+        }
+    </script>
+    <div id="modules"></div>
+
+    <template id="purchaseModuleTemplate">
+        <div class="purchase-module">
+            <button class="savePurchase">תקנה!</button><br>
+            <div class="autocomplete">
+                <label>הכנס שם מוצר:
+                    <input type="text" class="itemNameInput" autocomplete="off">
+                </label>
+                <ul class="itemList autoCompleteList" hidden></ul>
+            </div><br>
+            <div class="autocomplete">
+                <label>הכנס שם לקוח:
+                    <input type="text" class="customerNameInput" autocomplete="off">
+                </label>
+                <ul class="customerList autoCompleteList" hidden></ul>
+            </div><br>
+            <label>הכנס כמות מוצר שנקנית:
+                <input class="amountInput" type="number" min="1" step="1" value="1">
+            </label><br>
+            <span>מחיר סה"כ:</span>
+            <p class="priceShowcase">לא נבחר מוצר</p><br>
+            <label>בחר דרך תשלום:
+                <select class="paymentMethod">
+                    <option value="debt">חוב</option>
+                    <option value="cash">מזומן</option>
+                    <option value="bit">ביט</option>
+                </select>
+            </label>
+        </div>
+    </template>
+</body>
 </html>
