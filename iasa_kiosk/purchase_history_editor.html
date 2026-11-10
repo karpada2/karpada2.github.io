@@ -16,9 +16,126 @@
 
             await databaseHandler.init()
 
-            
+            var allCustomers = await databaseHandler.getCustomersFromGradesOriginalData(globals.getActiveGrades())
+            var items = await databaseHandler.getItemsDataForPurchases()
+
+            var itemUUIDToNameMap = {};
+            items["UUIDs"].forEach((key, i) => itemUUIDToNameMap[key] = items["names"][i][0]);
+
+            function getTimeStrings(unixTime) {
+                const date = new Date(unixTime * 1000)
+                const dateMap = {
+                    year: String(date.getFullYear()),
+                    month: String(date.getMonth() + 1),
+                    day: String(date.getDate()),
+                    hour: String(date.getHours()),
+                    minute: String(date.getMinutes()),
+                    seconds: String(date.getSeconds()),
+                }
+
+                Object.keys(dateMap).forEach((key) => {
+                    if (dateMap[key].length == 1) {
+                        dateMap[key] = "0" + dateMap[key]
+                    }
+                })
+                
+                return [
+                    dateMap["day"] + "/" + dateMap["month"] + "/" + dateMap["year"],
+                    dateMap["hour"] + ":" + dateMap["minute"] + ":" + dateMap["seconds"],
+                ]
+            }
+
+            const tableBody = document.getElementById("tableBody")
+            var valuesToDelete = new Set()
+            function addAllToTable(purchases) {
+                tableBody.replaceChildren()
+                const newValuesToDelete = new Set()
+                purchases.forEach((doc) => {
+                    const row = tableBody.insertRow(-1)
+
+                    const myUUID = doc.id
+
+                    const dateStrings = getTimeStrings(doc.data()["TIMESTAMP"])
+
+                    const dayCell = row.insertCell(-1)
+                    dayCell.textContent = dateStrings[0]
+
+                    const timeCell = row.insertCell(-1)
+                    timeCell.textContent = dateStrings[1]
+
+                    const nameCell = row.insertCell(-1)
+                    nameCell.textContent = allCustomers[doc.data()["CUSTOMER"]]["NAME"]
+
+                    const priceCell = row.insertCell(-1)
+                    priceCell.textContent = (doc.data()["PRICE"] + (doc.data()["TIP_AMOUNT"] || 0))/10
+
+                    const itemNameCell = row.insertCell(-1)
+                    itemNameCell.textContent = itemUUIDToNameMap[String(doc.data()["ITEM"].path).substring(String(doc.data()["ITEM"].path).lastIndexOf("/") + 1)]
+
+                    const itemAmountCell = row.insertCell(-1)
+                    itemAmountCell.textContent = doc.data()["AMOUNT"]
+
+                    const markDeleteCell = row.insertCell(-1)
+                    const checkbox = document.createElement("input");
+                    checkbox.type = "checkbox";
+
+                    checkbox.checked = valuesToDelete.has(myUUID);
+                    if (valuesToDelete.has(myUUID)) {
+                        newValuesToDelete.add(myUUID)
+                    }
+
+                    checkbox.addEventListener('change', (event) => {
+                        if (checkbox.checked) {
+                            valuesToDelete.add(myUUID)
+                        }
+                        else {
+                            valuesToDelete.delete(myUUID)
+                        }
+                    });
+                    markDeleteCell.appendChild(checkbox)
+                })
+                valuesToDelete = newValuesToDelete
+            }
+
+            databaseHandler.attachListenerToPurchases(addAllToTable)
+
+            const deleteProgressIndicator = document.getElementById("deleteProgressIndicator")
+            var deleting = false
+
+            document.getElementById("confirmDelete").addEventListener("click", async (event) => {
+                if (!deleting) {
+                    deleting = true
+                    deleteProgressIndicator.hidden = false
+                    deleteProgressIndicator.textContent = "מוחק..."
+                    await databaseHandler.deletePurchasesBatch(valuesToDelete)
+                    deleteProgressIndicator.textContent = "נמחק בהצלחה!"
+                    setTimeout(() => {
+                        deleteProgressIndicator.hidden = true
+                        deleting = false
+                        valuesToDelete.clear()
+                    }, 1500)
+                }
+            })
         </script>
 
-        
+        <button class="savePurchase" id="confirmDelete">מחק את מה שסומן</button>
+        <p class="deleteProgressIndicator" id="deleteProgressIndicator" hidden></p><br>
+
+        <table id="purchasesTable">
+            <thead>
+                <tr>
+                    <th>יום</th>
+                    <th>שעה</th>
+                    <th>שם</th>
+                    <th>מחיר קנייה</th>
+                    <th>שם מוצר</th>
+                    <th>כמות מוצר</th>
+                    <th>סמן למחיקה</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+
+            </tbody>
+        </table>
     </body>
 </html>
