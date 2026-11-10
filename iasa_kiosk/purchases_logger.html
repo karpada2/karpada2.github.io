@@ -62,6 +62,7 @@
             const customerNameInput = root.querySelector(".customerNameInput")
             const customerList = root.querySelector(".customerList")
             const paymentMethodInput = root.querySelector(".paymentMethod")
+            const saveProgressIndicator = root.querySelector(".saveProgressIndicator")
 
             let selectedItemIndex = null
             let selectedName = null
@@ -159,12 +160,18 @@
                 amountInput.value = "1"
                 paymentMethodInput.value = "debt"
                 updatePriceShowcase()
+                saveProgressIndicator.textContent = "נשלח בהצלחה!"
+                setTimeout(() => {
+                    saveProgressIndicator.hidden = true
+                }, 1500)
             }
 
             let saving = false
 
             async function guardedSave() {
                 if (saving) return
+                saveProgressIndicator.hidden = false
+                saveProgressIndicator.textContent = "שומר..."
                 saving = true
                 try {
                     await savePurchase()
@@ -203,7 +210,8 @@
 
     <template id="purchaseModuleTemplate">
         <div class="purchase-module">
-            <button class="savePurchase">תקנה!</button><br>
+            <button class="savePurchase">תקנה!</button>
+            <p class="saveProgressIndicator" hidden></p><br>
             <div class="autocomplete">
 
                 <label>הכנס שם לקוח:
