@@ -307,8 +307,8 @@ export async function updateCustomers(originalCustomers, newCustomers) {
     await updateOperatorsNames(globals.getOperatingGrade(), newCustomers)
 }
 
-export async function savePurchase(customerUUID, itemUUID, amount, totalPrice, tipAmount = 0) {
-    const purchaseRef = firestore.doc(firebaseDatabase, "PURCHASES", crypto.randomUUID())
+export async function savePurchase(customerUUID, itemUUID, amount, totalPrice, purchaseUUID = crypto.randomUUID(), tipAmount = 0) {
+    const purchaseRef = firestore.doc(firebaseDatabase, "PURCHASES", purchaseUUID)
     await firestore.setDoc(purchaseRef, {
         "CUSTOMER": customerUUID,
         "AMOUNT": parseInt(amount),
@@ -327,8 +327,8 @@ export async function savePurchase(customerUUID, itemUUID, amount, totalPrice, t
     )
 }
 
-export async function savePayment(customerUUID, paymentSize, paymentMethod) {
-    const paymentRef = firestore.doc(firebaseDatabase, "PAYMENTS", crypto.randomUUID())
+export async function savePayment(customerUUID, paymentSize, paymentMethod, purchaseUUID = crypto.randomUUID()) {
+    const paymentRef = firestore.doc(firebaseDatabase, "PAYMENTS", purchaseUUID)
     await firestore.setDoc(paymentRef, {
         "CUSTOMER": customerUUID,
         "METHOD": paymentMethod,
@@ -508,4 +508,84 @@ export async function updateOperatorsNames(operating_grade, allCustomersFullData
     })
 
     await firestore.updateDoc(firestore.doc(firebaseDatabase, "OPERATION_INFO", "DATA"), {"OPERATORS_NAMES" : operatorsNames})
+}
+
+// expects listener to handle a query snapshot
+export function attachListenerToPurchases(listener) {
+    const queryLastXSeconds = 2.5*3600
+    const query = firestore.query(firestore.collection(firebaseDatabase, "PURCHASES"), firestore.orderBy("TIMESTAMP", "desc"), firestore.where("TIMESTAMP", ">=", getCurrentTimestamp() - (queryLastXSeconds)))
+    firestore.onSnapshot(query, (querySnapshot) => {
+        listener(querySnapshot)
+    })
+}
+
+export async function deletePurchase(purchaseID) {
+    const purchaseDoc = await firestore.getDoc(firestore.doc(firebaseDatabase, "PURCHASES", purchaseID))
+    const paymentDoc = await firestore.getDoc(firestore.doc(firebaseDatabase, "PAYMENTS", purchaseID))
+    if (purchaseDoc.exists()) {
+        const purchaseData = purchaseDoc.data()
+        const paymentSize = purchaseData["PRICE"] + (purchaseData["TIP_AMOUNT"] || 0)
+        const UUID = purchaseData["CUSTOMER"]
+        await modifyDebt(UUID, -paymentSize)
+        await firestore.updateDoc(
+            firestore.doc(firebaseDatabase, "MONEY_INFO", "INFO"), {
+                ["UNCLAIMED_DEBTS." + globals.getOperatingGrade()]: firestore.increment(-paymentSize)
+            }
+        )
+        if (paymentDoc.exists()) {
+            await modifyDebt(UUID, paymentSize)
+            await firestore.updateDoc(
+                firestore.doc(firebaseDatabase, "MONEY_INFO", "INFO"), {
+                    ["CLAIMED_REVENUE." + globals.getOperatingGrade() + "." + paymentDoc.data()["METHOD"]]: firestore.increment(-paymentSize),
+                    ["UNCLAIMED_DEBTS." + globals.getOperatingGrade()]: firestore.increment(paymentSize)
+                }
+            )
+            await firestore.deleteDoc(firestore.doc(firebaseDatabase, "PAYMENTS", purchaseID))
+        }
+        await firestore.deleteDoc(firestore.doc(firebaseDatabase, "PURCHASES", purchaseID))
+    }
+}
+
+async function deletePurchaseBatch(purchaseID, batch) {
+    const purchaseDoc = await firestore.getDoc(firestore.doc(firebaseDatabase, "PURCHASES", purchaseID))
+    const paymentDoc = await firestore.getDoc(firestore.doc(firebaseDatabase, "PAYMENTS", purchaseID))
+    if (purchaseDoc.exists()) {
+        const purchaseData = purchaseDoc.data()
+        const paymentSize = purchaseData["PRICE"] + (purchaseData["TIP_AMOUNT"] || 0)
+        const UUID = purchaseData["CUSTOMER"]
+        batch.update(firestore.doc(firebaseDatabase, "CUSTOMERS", UUID), {
+            ["CURRENT_DEBT." + globals.getOperatingGrade()]: firestore.increment(-paymentSize)
+        })
+        //await modifyDebt(UUID, -paymentSize)
+        batch.update(
+            firestore.doc(firebaseDatabase, "MONEY_INFO", "INFO"), {
+                ["UNCLAIMED_DEBTS." + globals.getOperatingGrade()]: firestore.increment(-paymentSize)
+            }
+        )
+        if (paymentDoc.exists()) {
+            batch.update(firestore.doc(firebaseDatabase, "CUSTOMERS", UUID), {
+                ["CURRENT_DEBT." + globals.getOperatingGrade()]: firestore.increment(paymentSize)
+            })
+            //await modifyDebt(UUID, paymentSize)
+            batch.update(
+                firestore.doc(firebaseDatabase, "MONEY_INFO", "INFO"), {
+                    ["CLAIMED_REVENUE." + globals.getOperatingGrade() + "." + paymentDoc.data()["METHOD"]]: firestore.increment(-paymentSize),
+                    ["UNCLAIMED_DEBTS." + globals.getOperatingGrade()]: firestore.increment(paymentSize)
+                }
+            )
+            batch.delete(firestore.doc(firebaseDatabase, "PAYMENTS", purchaseID))
+        }
+        batch.delete(firestore.doc(firebaseDatabase, "PURCHASES", purchaseID))
+    }
+}
+
+export async function deletePurchasesBatch(purchasesIDs) {
+    const IDsArray = Array.from(purchasesIDs)
+    const batch = firestore.writeBatch(firebaseDatabase)
+
+    for (var i = 0; i < IDsArray.length; i++) {
+        await deletePurchaseBatch(IDsArray[i], batch)
+    }
+
+    await batch.commit()
 }

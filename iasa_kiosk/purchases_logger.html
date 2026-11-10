@@ -150,9 +150,10 @@
 
             const savePurchase = async () => {
                 if (selectedName != null && selectedItemIndex != null) {
-                    await databaseHandler.savePurchase(customerNameUUIDMap[selectedName], allItemsNames["UUIDs"][selectedItemIndex], parseInt(amountInput.value), getTotalPrice(parseInt(amountInput.value), selectedItemIndex))
+                    const purchasePaymentUUID = crypto.randomUUID()
+                    await databaseHandler.savePurchase(customerNameUUIDMap[selectedName], allItemsNames["UUIDs"][selectedItemIndex], parseInt(amountInput.value), getTotalPrice(parseInt(amountInput.value), selectedItemIndex), purchasePaymentUUID)
                     if (paymentMethodInput.value != "debt") {
-                        await databaseHandler.savePayment(customerNameUUIDMap[selectedName], getTotalPrice(parseInt(amountInput.value), selectedItemIndex), paymentMethodInput.selectedOptions[0].textContent)
+                        await databaseHandler.savePayment(customerNameUUIDMap[selectedName], getTotalPrice(parseInt(amountInput.value), selectedItemIndex), paymentMethodInput.selectedOptions[0].textContent, purchasePaymentUUID)
                     }
                 }
                 itemNameInput.value = ""
