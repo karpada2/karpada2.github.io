@@ -46,7 +46,7 @@ export const webPageData = {
     },
     "purchase_history_editor.html": {
         "access": ["admin", "basic"],
-        "enabled": false,
+        "enabled": true,
         "displayName": "עריכת היסטוריה"
     },
     "purchases_logger.html": {
